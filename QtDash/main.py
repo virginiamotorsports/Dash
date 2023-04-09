@@ -1,20 +1,47 @@
-from PyQt5.QtWidgets import QApplication, QWidget
-
-# Only needed for access to command line arguments
+# importing libraries
+from PyQt5.QtWidgets import * 
+from PyQt5.QtGui import * 
+from PyQt5.QtCore import * 
 import sys
-
-# You need one (and only one) QApplication instance per application.
-# Pass in sys.argv to allow command line arguments for your app.
-# If you know you won't use command line arguments QApplication([]) works too.
-app = QApplication(sys.argv)
-
-# Create a Qt widget, which will be our window.
-window = QWidget()
-window.show()  # IMPORTANT!!!!! Windows are hidden by default.
-
-# Start the event loop.
-app.exec()
-
-
-# Your application won't reach here until you exit and the event
-# loop has stopped.
+  
+  
+class Window(QMainWindow):
+    def __init__(self):
+        super().__init__()
+  
+        # setting title
+        self.setWindowTitle("Python ")
+  
+        # setting geometry
+        self.setGeometry(100, 100, 600, 400)
+  
+        # calling method
+        self.UiComponents()
+  
+        # showing all the widgets
+        self.show()
+  
+    # method for widgets
+    def UiComponents(self):
+  
+        # creating label
+        label = QLabel("Label", self)
+  
+        # setting geometry to label
+        label.setGeometry(100, 100, 120, 40)
+  
+        # adding border to label
+        label.setStyleSheet("border : 2px solid black")
+  
+        # opening window in maximized size
+        self.showMaximized()
+  
+  
+# create pyqt5 app
+App = QApplication(sys.argv)
+  
+# create the instance of our Window
+window = Window()
+  
+# start the app
+sys.exit(App.exec())
