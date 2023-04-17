@@ -1,0 +1,3 @@
+[submodule "caplin"]
+	path = src/caplin
+	url = https://github.com/pragmaticlinuxblog/caplin.git
