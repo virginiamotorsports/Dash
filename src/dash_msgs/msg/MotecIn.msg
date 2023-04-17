@@ -1,7 +1,7 @@
 #Decodes the motec data into a ros message which can be logged into a db3 file
 
 
-Header header
-uint_32 temp
-uint_32 bla
-uint_32 bla
+std_msgs/Header header
+int32 temp
+int32 bla
+int32 bla2
