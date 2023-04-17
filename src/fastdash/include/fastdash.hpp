@@ -33,9 +33,10 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "can_msgs/msg/frame.hpp"
-#include "can_msgs/srv/can_request.hpp"
-
-#include "log.h"
+// #include "can_msgs/srv/can_request.hpp"
+#include <std_msgs/msg/string.hpp>
+#include <rosbag2_cpp/writer.hpp>
+// #include "log.h"
 
 const std::string version = "1.00 from: " + std::string(__DATE__) + " " + std::string(__TIME__);
 const std::string programdescr = "ROS 2 to CAN-Bus Bridge\nVersion: " + version;
@@ -52,13 +53,13 @@ class ros2socketcan : public rclcpp::Node
          * @brief constructor for ros2socketcan class
          * @details Within the constructor the topic and service naming is done. 
          */
-        ros2socketcan(std::string can_socket2 = "can0");//boost::asio::io_service& ios);
+        ros2socketcan(std::string can_socket = "can0");//boost::asio::io_service& ios);
         
         /**
          * @brief Within the Init() fucntin the ROS and CAN setup is done.
          * @details Within the Init() function the ROS2 publisher, subscriber and the service server is initialized. In addition the socketcan interface is configured and assigned to the socket. The Init function is necessary as the topics need a fully constructed node class to be added to.
          */
-        void Init(const char* can_socket = "can0");//boost::asio::io_service& ios);
+        // void Init(const char* can_socket = "can0");//boost::asio::io_service& ios);
         /**
          * @brief destructor
          */
@@ -66,10 +67,11 @@ class ros2socketcan : public rclcpp::Node
 
     private:
         rclcpp::TimerBase::SharedPtr timer_;
+        std::unique_ptr<rosbag2_cpp::Writer> writer_;
         rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr publisher_;
         rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr test_pub_;
         rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr subscription_;
-        rclcpp::service::Service<can_msgs::srv::CanRequest>::SharedPtr server_ros2can_;
+        // rclcpp::service::Service<can_msgs::srv::CanRequest>::SharedPtr server_ros2can_;
         
         can_msgs::msg::Frame current_frame;
         
@@ -98,10 +100,10 @@ class ros2socketcan : public rclcpp::Node
         /**
          * @brief The ros2can_service provides the possibility to send a can message and wait for a specific can message with a give CAN Message ID.
          */
-        void ros2can_srv(
-        const std::shared_ptr<rmw_request_id_t> /*request_header*/,
-        const std::shared_ptr<can_msgs::srv::CanRequest::Request> request,
-        std::shared_ptr<can_msgs::srv::CanRequest::Response> response);
+        // void ros2can_srv(
+        // const std::shared_ptr<rmw_request_id_t> /*request_header*/,
+        // const std::shared_ptr<can_msgs::srv::CanRequest::Request> request,
+        // std::shared_ptr<can_msgs::srv::CanRequest::Response> response);
         
         /**
          * @biref The Stop method is needed as the interuped handler must be configered to the asio libary.

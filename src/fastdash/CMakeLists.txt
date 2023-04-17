@@ -28,6 +28,7 @@ find_package(example_interfaces REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(can_msgs REQUIRED)
 
 # find_package()
 
@@ -43,9 +44,13 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+include_directories(include)
 
-add_executable(fastdash src/fastdash.cpp)
-ament_target_dependencies(fastdash rclcpp rosbag2_cpp std_msgs)
+add_executable(fastdash include/fastdash.hpp src/fastdash.cpp)
+
+TARGET_LINK_LIBRARIES(fastdash dl -lboost_system)# -pthread  -lcrypt -lm -lpthread)
+
+ament_target_dependencies(fastdash rclcpp rosbag2_cpp std_msgs can_msgs)
 
 
 install(TARGETS
