@@ -25,6 +25,7 @@
 
 //#include <linux/can.h>
 #include <linux/can/raw.h>
+#include <filesystem>
 
 #include <boost/asio.hpp>
 //#include <boost/asio/io_service.hpp>
@@ -36,6 +37,9 @@
 // #include "can_msgs/srv/can_request.hpp"
 #include <std_msgs/msg/string.hpp>
 #include <rosbag2_cpp/writer.hpp>
+#include <rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp>
+#include <rosbag2_storage/storage_options.hpp>
+
 // #include "log.h"
 
 const std::string version = "1.00 from: " + std::string(__DATE__) + " " + std::string(__TIME__);
@@ -68,6 +72,8 @@ class ros2socketcan : public rclcpp::Node
     private:
         rclcpp::TimerBase::SharedPtr timer_;
         std::unique_ptr<rosbag2_cpp::Writer> writer_;
+        rosbag2_storage::StorageOptions storage_options_;
+        rosbag2_cpp::ConverterOptions converter_options_;
         rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr publisher_;
         rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr test_pub_;
         rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr subscription_;

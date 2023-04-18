@@ -9,8 +9,16 @@ ros2socketcan::ros2socketcan(std::string can_socket): Node("datalogger"), stream
     printf("Using can socket %s\n", can_socket.c_str());
     rclcpp::Time time_stamp = this->now();
     writer_ = std::make_unique<rosbag2_cpp::Writer>();
-    std::string s = "data_logged_test";
-    writer_->open(s);
+    std::filesystem::path s = "~/robag2_test";
+
+    // Storage Options
+    storage_options_.uri = s;
+    storage_options_.storage_id = "sqlite3";
+    // Converter Options
+    converter_options_.input_serialization_format = "cdr";
+    converter_options_.output_serialization_format = "cdr";
+
+    writer_->open(storage_options_);
 
     const char* canname = can_socket.c_str();
         
@@ -33,11 +41,11 @@ ros2socketcan::ros2socketcan(std::string can_socket): Node("datalogger"), stream
     {
         perror("Error in socket bind");
     }
-
+    printf("here");
     stream.assign(natsock);
     
-    std::cout << "ROS2 to CAN-Bus topic:" << subscription_->get_topic_name() 	<< std::endl;
-    std::cout << "CAN-Bus to ROS2 topic:" << publisher_->get_topic_name() 	<< std::endl;
+    // std::cout << "ROS2 to CAN-Bus topic:" << subscription_->get_topic_name() 	<< std::endl;
+    // std::cout << "CAN-Bus to ROS2 topic:" << publisher_->get_topic_name() 	<< std::endl;
     
     stream.async_read_some(boost::asio::buffer(&rec_frame, sizeof(rec_frame)),std::bind(&ros2socketcan::CanListener, this,std::ref(rec_frame),std::ref(stream)));
     
