@@ -3,13 +3,37 @@
 using std::placeholders::_1;
 using std::placeholders::_2;
 using std::placeholders::_3;
+#define DEBUG false
 
 ros2socketcan::ros2socketcan(std::string can_socket): Node("datalogger"), stream(ios), signals(ios, SIGINT, SIGTERM)
 {
     printf("Using can socket %s\n", can_socket.c_str());
-    rclcpp::Time time_stamp = this->now();
+
+
+    time_t currentTime = time(0);
+    tm* currentDate = localtime(&currentTime);
+
+    // Extract year, month, and day from the current date
+    int year = currentDate->tm_year + 1900;
+    int month = currentDate->tm_mon + 1;
+    int day = currentDate->tm_mday;
+    int hour = currentDate->tm_hour;
+    int min = currentDate->tm_min;
+    int sec = currentDate->tm_sec;
+
+    // Convert year, month, and day to string
+    std::stringstream ss;
+    ss << year << "_" << month << "_" << day << "_" << hour << "_" << min << "_" << sec;
+    std::string currentDateString = ss.str();
+
+
+
+
     writer_ = std::make_unique<rosbag2_cpp::Writer>();
-    std::filesystem::path s = "~/robag2_test";
+    std::filesystem::path s = "robag2_test_" + currentDateString;
+
+
+
 
     // Storage Options
     storage_options_.uri = s;
@@ -63,6 +87,7 @@ void ros2socketcan::stop()
     printf("\nEnd of Listener Thread. Please press strg+c again to stop the whole program.\n");
     ios.stop();
     signals.clear();
+    writer_->close();
 }
 
 ros2socketcan::~ros2socketcan(){printf("\nEnd of Publisher Thread. \n");}
@@ -135,8 +160,8 @@ void ros2socketcan::CanListener(struct can_frame& rec_frame, boost::asio::posix:
     
     frame.id = rec_frame.can_id; 
     frame.dlc = int(rec_frame.can_dlc);
-    
-    printf("R | %x | ", rec_frame.can_id);
+    if(DEBUG)
+        printf("R | %x | ", rec_frame.can_id);
     for(int i=0; i<rec_frame.can_dlc; i++)
     {
          frame.data[i]=rec_frame.data[i];
@@ -144,12 +169,13 @@ void ros2socketcan::CanListener(struct can_frame& rec_frame, boost::asio::posix:
     }
     current_frame = frame;
     std::cout << s.str() << " | ";
-    
-    for(int j=0;j<(int)rec_frame.can_dlc;j++)
-    {
-        printf("%i ", rec_frame.data[j]);
+    if(DEBUG){
+        for(int j=0;j<(int)rec_frame.can_dlc;j++)
+        {
+            printf("%i ", rec_frame.data[j]);
+        }
+        printf("\n");  
     }
-    printf("\n");  
     
     publisher_->publish(frame);
   

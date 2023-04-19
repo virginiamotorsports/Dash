@@ -26,6 +26,8 @@
 //#include <linux/can.h>
 #include <linux/can/raw.h>
 #include <filesystem>
+#include <ctime>
+#include <sstream>
 
 #include <boost/asio.hpp>
 //#include <boost/asio/io_service.hpp>
@@ -36,6 +38,9 @@
 #include "can_msgs/msg/frame.hpp"
 // #include "can_msgs/srv/can_request.hpp"
 #include <std_msgs/msg/string.hpp>
+#include "dash_msgs/msg/imu_in.hpp"
+#include "dash_msgs/msg/motec_in.hpp"
+#include "dash_msgs/msg/teensy_rear.hpp"
 #include <rosbag2_cpp/writer.hpp>
 #include <rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp>
 #include <rosbag2_storage/storage_options.hpp>
@@ -71,6 +76,9 @@ class ros2socketcan : public rclcpp::Node
 
     private:
         rclcpp::TimerBase::SharedPtr timer_;
+        dash_msgs::msg::ImuIn imu_msg;
+        dash_msgs::msg::MotecIn motec_msg;
+        dash_msgs::msg::TeensyRear teensy_msg;
         std::unique_ptr<rosbag2_cpp::Writer> writer_;
         rosbag2_storage::StorageOptions storage_options_;
         rosbag2_cpp::ConverterOptions converter_options_;
