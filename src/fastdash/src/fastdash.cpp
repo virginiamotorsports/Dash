@@ -4,45 +4,17 @@ using std::placeholders::_1;
 using std::placeholders::_2;
 using std::placeholders::_3;
 #define DEBUG false
+// #define BAG (motec_msg.engine_rpm > 200)
 
 ros2socketcan::ros2socketcan(std::string can_socket): Node("datalogger"), stream(ios), signals(ios, SIGINT, SIGTERM)
 {
     printf("Using can socket %s\n", can_socket.c_str());
 
-
-    time_t currentTime = time(0);
-    tm* currentDate = localtime(&currentTime);
-
-    // Extract year, month, and day from the current date
-    int year = currentDate->tm_year + 1900;
-    int month = currentDate->tm_mon + 1;
-    int day = currentDate->tm_mday;
-    int hour = currentDate->tm_hour;
-    int min = currentDate->tm_min;
-    int sec = currentDate->tm_sec;
-
-    // Convert year, month, and day to string
-    std::stringstream ss;
-    ss << year << "_" << month << "_" << day << "_" << hour << "_" << min << "_" << sec;
-    std::string currentDateString = ss.str();
-
-
-
-
-    writer_ = std::make_unique<rosbag2_cpp::Writer>();
-    std::filesystem::path s = "robag2_test_" + currentDateString;
-
-
-
-
-    // Storage Options
-    storage_options_.uri = s;
-    storage_options_.storage_id = "sqlite3";
-    // Converter Options
-    converter_options_.input_serialization_format = "cdr";
-    converter_options_.output_serialization_format = "cdr";
-
-    writer_->open(storage_options_);
+    writer_ = std::make_unique<rosbag2_cpp::writers::SequentialWriter>();
+    
+    motec_msg.header = std_msgs::msg::Header();
+    motec_msg.header.stamp = builtin_interfaces::msg::Time();
+    motec_msg.header.stamp.sec = 32;
 
     const char* canname = can_socket.c_str();
         
@@ -87,7 +59,32 @@ void ros2socketcan::stop()
     printf("\nEnd of Listener Thread. Please press strg+c again to stop the whole program.\n");
     ios.stop();
     signals.clear();
-    writer_->close();
+//     if(BAG)
+//         writer_->close();
+}
+
+void ros2socketcan::start_bag(){
+    
+    time_t currentTime = time(0);
+    tm* currentDate = localtime(&currentTime);
+    int year = currentDate->tm_year + 1900;
+    int month = currentDate->tm_mon + 1;
+    int day = currentDate->tm_mday;
+    int hour = currentDate->tm_hour;
+    int min = currentDate->tm_min;
+    int sec = currentDate->tm_sec;
+    std::stringstream ss;
+    ss << year << "_" << month << "_" << day << "_" << hour << "_" << min << "_" << sec;
+    std::string currentDateString = ss.str();
+    std::filesystem::path s = "/home/bags/robag2_test_" + currentDateString;
+    // Storage Options
+    storage_options_.uri = s;
+    storage_options_.storage_id = "sqlite3";
+    // Converter Options
+    converter_options_.input_serialization_format = "cdr";
+    converter_options_.output_serialization_format = "cdr";
+
+    writer_->open(storage_options_, converter_options_);
 }
 
 ros2socketcan::~ros2socketcan(){printf("\nEnd of Publisher Thread. \n");}

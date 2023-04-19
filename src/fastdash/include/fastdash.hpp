@@ -41,7 +41,7 @@
 #include "dash_msgs/msg/imu_in.hpp"
 #include "dash_msgs/msg/motec_in.hpp"
 #include "dash_msgs/msg/teensy_rear.hpp"
-#include <rosbag2_cpp/writer.hpp>
+#include <rosbag2_cpp/writers/sequential_writer.hpp>
 #include <rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp>
 #include <rosbag2_storage/storage_options.hpp>
 
@@ -79,12 +79,13 @@ class ros2socketcan : public rclcpp::Node
         dash_msgs::msg::ImuIn imu_msg;
         dash_msgs::msg::MotecIn motec_msg;
         dash_msgs::msg::TeensyRear teensy_msg;
-        std::unique_ptr<rosbag2_cpp::Writer> writer_;
+        std::unique_ptr<rosbag2_cpp::writers::SequentialWriter> writer_;
         rosbag2_storage::StorageOptions storage_options_;
         rosbag2_cpp::ConverterOptions converter_options_;
         rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr publisher_;
         rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr test_pub_;
         rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr subscription_;
+
         // rclcpp::service::Service<can_msgs::srv::CanRequest>::SharedPtr server_ros2can_;
         
         can_msgs::msg::Frame current_frame;
@@ -93,6 +94,10 @@ class ros2socketcan : public rclcpp::Node
          * @brief The CanSendConfirm function is needed by the .async_write_some function and is called as confirmation for a successfull send process.
          */
         void CanSendConfirm();
+
+        void start_bag();
+
+        void end_bag();
         
         /**
          * @brief The CanPublisher is listening to a ROS2 Topic and calls the CanSend Method.
