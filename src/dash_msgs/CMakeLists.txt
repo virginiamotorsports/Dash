@@ -19,7 +19,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ImuIn.msg"
-  "msg/MotecIn.msg"
+  "msg/MotecReport.msg"
   "msg/TeensyRear.msg"
   DEPENDENCIES builtin_interfaces std_msgs
  )
