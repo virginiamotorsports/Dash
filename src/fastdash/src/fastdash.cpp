@@ -8,8 +8,10 @@ using std::placeholders::_3;
 
 ros2socketcan::ros2socketcan(std::string can_socket): Node("datalogger"), stream(ios), signals(ios, SIGINT, SIGTERM)
 {
-    printf("Using can socket %s\n", can_socket.c_str());
+    std::string s1 = "Using can socket " +  can_socket + "\n";
+    RCLCPP_INFO(this->get_logger(), s1.c_str());
     int i = 0;
+
     i += gpioInitialise(); // this initializes the library. i dunno. it just does. 
 	i += gpioSetMode(a_pin, PI_OUTPUT); // set the relevant pins to output mode. 
     i += gpioSetMode(b_pin,  PI_OUTPUT);
@@ -29,11 +31,6 @@ ros2socketcan::ros2socketcan(std::string can_socket): Node("datalogger"), stream
         this->homedir = getpwuid(getuid())->pw_dir;
     }
 
-    rclcpp::Time time_stamp = this->now();
-
-    motec_msg.header = std_msgs::msg::Header();
-    motec_msg.header.stamp = builtin_interfaces::msg::Time();
-    motec_msg.header.stamp.sec = 32;
 
     const char* canname = can_socket.c_str();
         
@@ -56,8 +53,9 @@ ros2socketcan::ros2socketcan(std::string can_socket): Node("datalogger"), stream
     {
         perror("Error in socket bind");
     }
-    printf("here");
     stream.assign(natsock);
+
+    initalize_topics();
     
     // std::cout << "ROS2 to CAN-Bus topic:" << subscription_->get_topic_name() 	<< std::endl;
     // std::cout << "CAN-Bus to ROS2 topic:" << publisher_->get_topic_name() 	<< std::endl;
@@ -111,6 +109,16 @@ void ros2socketcan::write_to_bag(){
     rclcpp::Time time_stamp = this->now();
 
     // writer_->write(motec_msg, "chatter", "std_msgs/msg/String", time_stamp);
+}
+
+void ros2socketcan::initalize_topics(){
+    rclcpp::Time time_stamp = this->now();
+
+    motec_msg.header = std_msgs::msg::Header();
+    motec_msg.header.stamp = time_stamp;
+
+    brake_msg.header = std_msgs::msg::Header();
+    brake_msg.header.stamp = time_stamp;
 }
 
 
@@ -180,28 +188,53 @@ void ros2socketcan::CanListener(struct can_frame& rec_frame, boost::asio::posix:
     
     can_msgs::msg::Frame frame;
     
-    std::stringstream s;
-    
     frame.id = rec_frame.can_id; 
     frame.dlc = int(rec_frame.can_dlc);
-    if(DEBUG)
-        printf("R | %x | ", rec_frame.can_id);
     for(int i=0; i<rec_frame.can_dlc; i++)
     {
          frame.data[i]=rec_frame.data[i];
-         s << rec_frame.data[i];
     }
-    current_frame = frame;
-    std::cout << s.str() << " | ";
-    if(DEBUG){
-        for(int j=0;j<(int)rec_frame.can_dlc;j++)
-        {
-            printf("%i ", rec_frame.data[j]);
+
+    switch(frame.id){
+        case(120):{
+            break;
         }
-        printf("\n");  
+        case(0x4C4):{
+            brake_msg.front_left[0] = ((((short)frame.data[0]) << 8) | frame.data[1] / 10.0);
+            brake_msg.front_left[1] = ((((short)frame.data[2]) << 8) | frame.data[3] / 10.0);
+            brake_msg.front_left[2] = ((((short)frame.data[4]) << 8) | frame.data[5] / 10.0);
+            brake_msg.front_left[3] = ((((short)frame.data[6]) << 8) | frame.data[7] / 10.0);
+        }
+        case(0x4C5):{
+            break;
+        }
+        case(0x4C6):{
+            break;
+        }
+        case(0x4C7):{
+            break;
+        }
+        case(0x4C8):{
+            break;
+        }
+        case(0x4CA):{
+            break;
+        }
+        case(0x4CB):{
+            break;
+        }
+        case(0x4CC):{
+            break;
+        }
+        case(0x4CD):{
+            break;
+        }
+        case(0x4CE):{
+            break;
+        }
     }
     
-    publisher_->publish(frame);
+    // publisher_->publish(frame);
   
     stream.async_read_some(boost::asio::buffer(&rec_frame, sizeof(rec_frame)),std::bind(&ros2socketcan::CanListener,this, std::ref(rec_frame),std::ref(stream)));
     

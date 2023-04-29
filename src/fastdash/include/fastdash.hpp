@@ -53,7 +53,8 @@
 #include "can_msgs/msg/frame.hpp"
 // #include "can_msgs/srv/can_request.hpp"
 #include <std_msgs/msg/string.hpp>
-#include "dash_msgs/msg/imu_in.hpp"
+#include "dash_msgs/msg/imu_report.hpp"
+#include "dash_msgs/msg/brake_temp.hpp"
 #include "dash_msgs/msg/motec_report.hpp"
 #include "dash_msgs/msg/teensy_rear.hpp"
 #include <rosbag2_cpp/writers/sequential_writer.hpp>
@@ -92,7 +93,8 @@ class ros2socketcan : public rclcpp::Node
     private:
         rclcpp::TimerBase::SharedPtr timer_;
         const char *homedir;
-        dash_msgs::msg::ImuIn imu_msg;
+        dash_msgs::msg::ImuReport imu_msg;
+        dash_msgs::msg::BrakeTemp brake_msg;
         dash_msgs::msg::MotecReport motec_msg;
         dash_msgs::msg::TeensyRear teensy_msg;
         std::unique_ptr<rosbag2_cpp::writers::SequentialWriter> writer_;
@@ -114,6 +116,8 @@ class ros2socketcan : public rclcpp::Node
         void start_bag();
 
         void end_bag();
+
+        void initalize_topics();
 
         void write_to_bag();
 
