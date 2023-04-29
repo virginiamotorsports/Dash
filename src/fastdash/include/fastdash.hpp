@@ -23,6 +23,16 @@
 //#include <sys/socket.h>
 //#include <sys/ioctl.h>
 
+
+//define pin names because numbers are confusing
+#define a_pin 17
+#define b_pin 27
+#define c_pin 22
+#define d_pin 5
+#define e_pin 6
+#define f_pin 26
+#define g_pin 23
+
 //#include <linux/can.h>
 #include <linux/can/raw.h>
 #include <filesystem>
@@ -103,6 +113,8 @@ class ros2socketcan : public rclcpp::Node
         void start_bag();
 
         void end_bag();
+
+        void update_7seg();
         
         /**
          * @brief The CanPublisher is listening to a ROS2 Topic and calls the CanSend Method.

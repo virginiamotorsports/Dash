@@ -10,6 +10,15 @@ ros2socketcan::ros2socketcan(std::string can_socket): Node("datalogger"), stream
 {
     printf("Using can socket %s\n", can_socket.c_str());
 
+    gpioInitialise(); // this initializes the library. i dunno. it just does. 
+	gpioSetMode(a_pin, PI_OUTPUT); // set the relevant pins to output mode. 
+    gpioSetMode(b_pin,  PI_OUTPUT);
+    gpioSetMode(c_pin, PI_OUTPUT);
+    gpioSetMode(d_pin, PI_OUTPUT);
+    gpioSetMode(e_pin, PI_OUTPUT);
+    gpioSetMode(f_pin, PI_OUTPUT);
+    gpioSetMode(g_pin, PI_OUTPUT);
+
     writer_ = std::make_unique<rosbag2_cpp::writers::SequentialWriter>();
 
     if ((homedir = getenv("HOME")) == NULL) {
@@ -192,6 +201,124 @@ void ros2socketcan::CanListener(struct can_frame& rec_frame, boost::asio::posix:
     stream.async_read_some(boost::asio::buffer(&rec_frame, sizeof(rec_frame)),std::bind(&ros2socketcan::CanListener,this, std::ref(rec_frame),std::ref(stream)));
     
 }
+
+
+void update_7seg(int gear){
+    switch(gear)
+    {
+        case 0:
+        {
+            gpioWrite(a_pin,1);
+            gpioWrite(b_pin,1);
+            gpioWrite(c_pin,1);
+            gpioWrite(d_pin,1);
+            gpioWrite(e_pin,1);
+            gpioWrite(f_pin,1);
+            gpioWrite(g_pin,0);
+            break;
+        }
+        case 1:
+        {
+            gpioWrite(a_pin,0);
+            gpioWrite(b_pin,1);
+            gpioWrite(c_pin,1);
+            gpioWrite(d_pin,0);
+            gpioWrite(e_pin,0);
+            gpioWrite(f_pin,0);
+            gpioWrite(g_pin,0);
+            break;
+        }
+        case 2:
+        {
+            gpioWrite(a_pin,1);
+            gpioWrite(b_pin,1);
+            gpioWrite(c_pin,0);
+            gpioWrite(d_pin,1);
+            gpioWrite(e_pin,1);
+            gpioWrite(f_pin,0);
+            gpioWrite(g_pin,1);
+            break;
+        }
+        case 3:
+        {
+            gpioWrite(a_pin,1);
+            gpioWrite(b_pin,1);
+            gpioWrite(c_pin,1);
+            gpioWrite(d_pin,1);
+            gpioWrite(e_pin,0);
+            gpioWrite(f_pin,0);
+            gpioWrite(g_pin,1);
+            break;
+        }
+        case 4:
+        {
+            gpioWrite(a_pin,0);
+            gpioWrite(b_pin,1);
+            gpioWrite(c_pin,1);
+            gpioWrite(d_pin,0);
+            gpioWrite(e_pin,0);
+            gpioWrite(f_pin,1);
+            gpioWrite(g_pin,1);
+            break;
+        }
+        case 5:
+        {
+            gpioWrite(a_pin,1);
+            gpioWrite(b_pin,1);
+            gpioWrite(c_pin,1);
+            gpioWrite(d_pin,1);
+            gpioWrite(e_pin,1);
+            gpioWrite(f_pin,1);
+            gpioWrite(g_pin,1);
+            break;
+        }
+        case 6:
+        {
+            gpioWrite(a_pin,1);
+            gpioWrite(b_pin,0);
+            gpioWrite(c_pin,1);
+            gpioWrite(d_pin,1);
+            gpioWrite(e_pin,1);
+            gpioWrite(f_pin,1);
+            gpioWrite(g_pin,0);
+            break;
+        }
+        case 7:
+        {
+            gpioWrite(a_pin,1);
+            gpioWrite(b_pin,1);
+            gpioWrite(c_pin,1);
+            gpioWrite(d_pin,0);
+            gpioWrite(e_pin,0);
+            gpioWrite(f_pin,0);
+            gpioWrite(g_pin,0);
+            break;
+        }
+        case 8:
+        {
+            gpioWrite(a_pin,1);
+            gpioWrite(b_pin,1);
+            gpioWrite(c_pin,1);
+            gpioWrite(d_pin,1);
+            gpioWrite(e_pin,1);
+            gpioWrite(f_pin,1);
+            gpioWrite(g_pin,1);
+            break;
+        }
+        default:
+        {
+            gpioWrite(a_pin,1);
+            gpioWrite(b_pin,1);
+            gpioWrite(c_pin,1);
+            gpioWrite(d_pin,1);
+            gpioWrite(e_pin,1);
+            gpioWrite(f_pin,1);
+            gpioWrite(g_pin,0);
+            break;
+        }
+    }
+}
+
 
 int main(int argc, char * argv[])
 {
