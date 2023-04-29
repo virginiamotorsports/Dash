@@ -9,11 +9,12 @@ can0 = can.interface.Bus(channel = 'can0', bustype = 'socketcan')# socketcan_nat
 #msg = can.Message(arbitration_id=0x123, data=[0, 1, 2, 3, 4, 5, 6, 7], is_extended_id=False)
 while(True):
     msg = can0.recv(10.0)
-    # print(msg)
+    print(msg)
     if (msg.arbitration_id == 200):
         # print(bytes(msg.data))
         # print (struct.unpack('>H', bytes(msg.data[0:2]))[0]  / 10 - 100.)
-        print(msg)
+        # print(msg)
+        pass
     if msg is None:
         print('Timeout occurred, no message.')
 
