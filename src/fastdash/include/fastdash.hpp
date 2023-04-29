@@ -114,6 +114,8 @@ class ros2socketcan : public rclcpp::Node
 
         void end_bag();
 
+        void write_to_bag();
+
         void update_7seg();
         
         /**

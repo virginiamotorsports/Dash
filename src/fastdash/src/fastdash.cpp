@@ -9,20 +9,25 @@ using std::placeholders::_3;
 ros2socketcan::ros2socketcan(std::string can_socket): Node("datalogger"), stream(ios), signals(ios, SIGINT, SIGTERM)
 {
     printf("Using can socket %s\n", can_socket.c_str());
+    int i = 0;
+    i += gpioInitialise(); // this initializes the library. i dunno. it just does. 
+	i += gpioSetMode(a_pin, PI_OUTPUT); // set the relevant pins to output mode. 
+    i += gpioSetMode(b_pin,  PI_OUTPUT);
+    i += gpioSetMode(c_pin, PI_OUTPUT);
+    i += gpioSetMode(d_pin, PI_OUTPUT);
+    i += gpioSetMode(e_pin, PI_OUTPUT);
+    i += gpioSetMode(f_pin, PI_OUTPUT);
+    i += gpioSetMode(g_pin, PI_OUTPUT);
 
-    gpioInitialise(); // this initializes the library. i dunno. it just does. 
-	gpioSetMode(a_pin, PI_OUTPUT); // set the relevant pins to output mode. 
-    gpioSetMode(b_pin,  PI_OUTPUT);
-    gpioSetMode(c_pin, PI_OUTPUT);
-    gpioSetMode(d_pin, PI_OUTPUT);
-    gpioSetMode(e_pin, PI_OUTPUT);
-    gpioSetMode(f_pin, PI_OUTPUT);
-    gpioSetMode(g_pin, PI_OUTPUT);
+    if(i != 0){
+        printf("GPIO init failed. Exiting.\n");
+        exit(1);
+    }
 
     writer_ = std::make_unique<rosbag2_cpp::writers::SequentialWriter>();
 
-    if ((homedir = getenv("HOME")) == NULL) {
-        homedir = getpwuid(getuid())->pw_dir;
+    if ((this->homedir = getenv("HOME")) == NULL) {
+        this->homedir = getpwuid(getuid())->pw_dir;
     }
 
     rclcpp::Time time_stamp = this->now();
@@ -89,9 +94,9 @@ void ros2socketcan::start_bag(){
     int min = currentDate->tm_min;
     int sec = currentDate->tm_sec;
     std::stringstream ss;
-    ss << year << "_" << month << "_" << day << "_" << hour << "_" << min << "_" << sec;
+    ss << this->homedir << "/bags/robag2_test_" << year << "_" << month << "_" << day << "_" << hour << "_" << min << "_" << sec;
     std::string currentDateString = ss.str();
-    std::filesystem::path s = homedir + "/bags/robag2_test_" + currentDateString;
+    std::filesystem::path s = currentDateString;
     // Storage Options
     storage_options_.uri = s;
     storage_options_.storage_id = "sqlite3";
@@ -105,7 +110,7 @@ void ros2socketcan::start_bag(){
 void ros2socketcan::write_to_bag(){
     rclcpp::Time time_stamp = this->now();
 
-    writer_->write(motec_msg, "chatter", "std_msgs/msg/String", time_stamp);
+    // writer_->write(motec_msg, "chatter", "std_msgs/msg/String", time_stamp);
 }
 
 
