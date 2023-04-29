@@ -1,4 +1,4 @@
-/** @file ros2socketcan.h
+/** @file fastdash.h
  *
  *  @ingroup ROS2CAN_bridge
  *  @author Philipp Wuestenberg
@@ -67,18 +67,18 @@ const std::string version = "1.00 from: " + std::string(__DATE__) + " " + std::s
 const std::string programdescr = "ROS 2 to CAN-Bus Bridge\nVersion: " + version;
 
 /**
- * @brief The ros2socketcan bridge connects a canbus with the ROS2 topic system. 
+ * @brief The fastdash bridge connects a canbus with the ROS2 topic system. 
  * @details A nodes is provided, which provides the bridge from a ROS topic to the CAN bus and from the CAN bus to a ROS topic. The node functions as a bidirectional bridge and provides a service to publish a message and receive the answer with the fitting message id. 
  * 
  */
-class ros2socketcan : public rclcpp::Node
+class fastdash : public rclcpp::Node
 {
     public:
         /**
-         * @brief constructor for ros2socketcan class
+         * @brief constructor for fastdash class
          * @details Within the constructor the topic and service naming is done. 
          */
-        ros2socketcan(std::string can_socket = "can0");//boost::asio::io_service& ios);
+        fastdash(std::string can_socket = "can0");//boost::asio::io_service& ios);
         
         /**
          * @brief Within the Init() fucntin the ROS and CAN setup is done.
@@ -88,19 +88,22 @@ class ros2socketcan : public rclcpp::Node
         /**
          * @brief destructor
          */
-        ~ros2socketcan();
+        ~fastdash();
 
     private:
         rclcpp::TimerBase::SharedPtr timer_;
         const char *homedir;
+        bool prev_bag_state = false;
         dash_msgs::msg::ImuReport imu_msg;
         dash_msgs::msg::BrakeTemp brake_msg;
         dash_msgs::msg::MotecReport motec_msg;
         dash_msgs::msg::TeensyRear teensy_msg;
+        std::shared_ptr<rcutils_uint8_array_t> ser_data_;
         std::shared_ptr<rosbag2_storage::SerializedBagMessage> message_;
         std::unique_ptr<rosbag2_cpp::writers::SequentialWriter> writer_;
         rosbag2_storage::StorageOptions storage_options_;
         rosbag2_cpp::ConverterOptions converter_options_;
+        rclcpp::TimerBase::SharedPtr stop_timer;
         rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr publisher_;
         rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr test_pub_;
         rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr subscription_;
@@ -116,11 +119,11 @@ class ros2socketcan : public rclcpp::Node
 
         void start_bag();
 
-        void end_bag();
+        void stop_bag();
 
         void initalize_topics();
 
-        void write_to_bag(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
+        void write_to_bag(std::string topic_name, void* msg);
 
         int get_gear(double Mph, double RPM);
 

@@ -4,9 +4,8 @@ using std::placeholders::_1;
 using std::placeholders::_2;
 using std::placeholders::_3;
 #define DEBUG false
-// #define BAG (motec_msg.engine_rpm > 200)
 
-ros2socketcan::ros2socketcan(std::string can_socket): Node("datalogger"), stream(ios), signals(ios, SIGINT, SIGTERM)
+fastdash::fastdash(std::string can_socket): Node("datalogger"), stream(ios), signals(ios, SIGINT, SIGTERM)
 {
     std::string s1 = "Using can socket " +  can_socket + "\n";
     RCLCPP_INFO(this->get_logger(), s1.c_str());
@@ -26,6 +25,9 @@ ros2socketcan::ros2socketcan(std::string can_socket): Node("datalogger"), stream
     }
 
     writer_ = std::make_unique<rosbag2_cpp::writers::SequentialWriter>();
+    std::chrono::seconds bag_hyster(10);
+    this->stop_timer = create_wall_timer(bag_hyster, std::bind(&fastdash::stop_bag, this));
+    this->stop_timer->cancel();
 
     if ((this->homedir = getenv("HOME")) == NULL) {
         this->homedir = getpwuid(getuid())->pw_dir;
@@ -41,7 +43,7 @@ ros2socketcan::ros2socketcan(std::string can_socket): Node("datalogger"), stream
     
     publisher_ 		= this->create_publisher<can_msgs::msg::Frame>(topicname_receive.str(), 1);
     // test_pub_ 		= this->create_publisher<can_msgs::msg::Frame>(topicname_transmit.str(), 1);
-    // subscription_ 	= this->create_subscription<can_msgs::msg::Frame>(topicname_transmit.str(), std::bind(&ros2socketcan::CanPublisher, this, _1));
+    // subscription_ 	= this->create_subscription<can_msgs::msg::Frame>(topicname_transmit.str(), std::bind(&fastdash::CanPublisher, this, _1));
     
     strcpy(ifr.ifr_name, can_socket.c_str());
     ioctl(natsock, SIOCGIFINDEX, &ifr);
@@ -60,9 +62,9 @@ ros2socketcan::ros2socketcan(std::string can_socket): Node("datalogger"), stream
     // std::cout << "ROS2 to CAN-Bus topic:" << subscription_->get_topic_name() 	<< std::endl;
     // std::cout << "CAN-Bus to ROS2 topic:" << publisher_->get_topic_name() 	<< std::endl;
     
-    stream.async_read_some(boost::asio::buffer(&rec_frame, sizeof(rec_frame)),std::bind(&ros2socketcan::CanListener, this,std::ref(rec_frame),std::ref(stream)));
+    stream.async_read_some(boost::asio::buffer(&rec_frame, sizeof(rec_frame)),std::bind(&fastdash::CanListener, this,std::ref(rec_frame),std::ref(stream)));
     
-    signals.async_wait(std::bind(&ros2socketcan::stop, this));
+    signals.async_wait(std::bind(&fastdash::stop, this));
     
     boost::system::error_code ec;
     
@@ -71,7 +73,7 @@ ros2socketcan::ros2socketcan(std::string can_socket): Node("datalogger"), stream
     bt.detach();
 }
 
-void ros2socketcan::stop()
+void fastdash::stop()
 {
     printf("\nEnd of Listener Thread. Please press strg+c again to stop the whole program.\n");
     ios.stop();
@@ -81,7 +83,7 @@ void ros2socketcan::stop()
 //         writer_->close();
 }
 
-void ros2socketcan::start_bag(){
+void fastdash::start_bag(){
     
     time_t currentTime = time(0);
     tm* currentDate = localtime(&currentTime);
@@ -105,13 +107,24 @@ void ros2socketcan::start_bag(){
     writer_->open(storage_options_, converter_options_);
 }
 
-void ros2socketcan::write_to_bag(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message){
-    rclcpp::Time time_stamp = this->now();
-
-    // writer_->write(motec_msg, "chatter", "std_msgs/msg/String", time_stamp);
+void fastdash::stop_bag(){
+    writer_->close();
+    stop_timer->cancel();
 }
 
-void ros2socketcan::initalize_topics(){
+void fastdash::write_to_bag(std::string topic_name, void* msg){
+    rcutils_time_point_value_t time_stamp_rcutils = this->now().nanoseconds();
+    uint8_t* serialized_data = reinterpret_cast<uint8_t*>(&msg);
+    this->ser_data_->buffer = serialized_data;
+    this->ser_data_->buffer_length = sizeof(msg);
+    this->ser_data_->buffer_capacity = sizeof(msg);
+    this->message_->serialized_data = ser_data_;
+    this->message_->topic_name = topic_name;
+    this->message_->time_stamp = time_stamp_rcutils;
+    this->writer_->write(this->message_);
+}
+
+void fastdash::initalize_topics(){
     rclcpp::Time time_stamp = this->now();
 
     motec_msg.header = std_msgs::msg::Header();
@@ -122,9 +135,9 @@ void ros2socketcan::initalize_topics(){
 }
 
 
-ros2socketcan::~ros2socketcan(){printf("\nEnd of Publisher Thread. \n");}
+fastdash::~fastdash(){printf("\nEnd of Publisher Thread. \n");}
 
-// void ros2socketcan::CanSend(const can_msgs::msg::Frame msg)
+// void fastdash::CanSend(const can_msgs::msg::Frame msg)
 // {
 //     struct can_frame frame1;
     
@@ -159,11 +172,11 @@ ros2socketcan::~ros2socketcan(){printf("\nEnd of Publisher Thread. \n");}
 //     }
 //     printf("\n");
     
-//     stream.async_write_some(boost::asio::buffer(&frame1, sizeof(frame1)),std::bind(&ros2socketcan::CanSendConfirm, this));
+//     stream.async_write_some(boost::asio::buffer(&frame1, sizeof(frame1)),std::bind(&fastdash::CanSendConfirm, this));
 // }
 
 
-// void ros2socketcan::CanPublisher(const can_msgs::msg::Frame::SharedPtr msg)
+// void fastdash::CanPublisher(const can_msgs::msg::Frame::SharedPtr msg)
 // {
 
 //     can_msgs::msg::Frame msg1;
@@ -178,12 +191,12 @@ ros2socketcan::~ros2socketcan(){printf("\nEnd of Publisher Thread. \n");}
     
 // }
 
-// void ros2socketcan::CanSendConfirm(void)
+// void fastdash::CanSendConfirm(void)
 // {
 //     //std::cout << "Message sent" << std::endl;
 // }
 
-void ros2socketcan::CanListener(struct can_frame& rec_frame, boost::asio::posix::basic_stream_descriptor<>& stream)
+void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basic_stream_descriptor<>& stream)
 {
     
     can_msgs::msg::Frame frame;
@@ -197,6 +210,20 @@ void ros2socketcan::CanListener(struct can_frame& rec_frame, boost::asio::posix:
 
     switch(frame.id){
         case(120):{
+            motec_msg.engine_rpm = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0);
+            if(motec_msg.engine_rpm > 800 && prev_bag_state == false){
+                if(!this->stop_timer->is_canceled())
+                    this->stop_timer->cancel();
+                else{
+                    start_bag();
+                    
+                }
+                prev_bag_state = true;
+            }
+            else if(motec_msg.engine_rpm < 600 && prev_bag_state == true){
+                this->stop_timer->reset();
+                prev_bag_state = false;
+            }
             break;
         }
         case(0x4C4):{
@@ -261,17 +288,15 @@ void ros2socketcan::CanListener(struct can_frame& rec_frame, boost::asio::posix:
         }
         case(0x4CD):{
             brake_msg.rear_left_sensor_temp = (frame.data[0] / 10.0 - 100.0);
-            rclcpp::Time time_stamp = this->now();
-            rclcpp::SerializedMessage serialized_msg;
-            serialization_info.serialize_messsage(&brake_msg, &serialized_msg);
-            // this->writer_->write(dash_msgs::msg::BrakeTemp::serialize_cdr(this->brake_msg));
+            write_to_bag("brake_temp", &brake_msg);
+            
             break;
         }
     }
     
     // publisher_->publish(frame);
   
-    stream.async_read_some(boost::asio::buffer(&rec_frame, sizeof(rec_frame)),std::bind(&ros2socketcan::CanListener,this, std::ref(rec_frame),std::ref(stream)));
+    stream.async_read_some(boost::asio::buffer(&rec_frame, sizeof(rec_frame)),std::bind(&fastdash::CanListener,this, std::ref(rec_frame),std::ref(stream)));
     
 }
 
@@ -419,7 +444,7 @@ int get_gear(double Mph, double RPM){
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<ros2socketcan>());
+  rclcpp::spin(std::make_shared<fastdash>());
   rclcpp::shutdown();
   return 0;
 }
