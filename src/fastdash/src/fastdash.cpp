@@ -11,7 +11,13 @@ ros2socketcan::ros2socketcan(std::string can_socket): Node("datalogger"), stream
     printf("Using can socket %s\n", can_socket.c_str());
 
     writer_ = std::make_unique<rosbag2_cpp::writers::SequentialWriter>();
-    
+
+    if ((homedir = getenv("HOME")) == NULL) {
+        homedir = getpwuid(getuid())->pw_dir;
+    }
+
+    rclcpp::Time time_stamp = this->now();
+
     motec_msg.header = std_msgs::msg::Header();
     motec_msg.header.stamp = builtin_interfaces::msg::Time();
     motec_msg.header.stamp.sec = 32;
@@ -76,7 +82,7 @@ void ros2socketcan::start_bag(){
     std::stringstream ss;
     ss << year << "_" << month << "_" << day << "_" << hour << "_" << min << "_" << sec;
     std::string currentDateString = ss.str();
-    std::filesystem::path s = "/home/bags/robag2_test_" + currentDateString;
+    std::filesystem::path s = homedir + "/bags/robag2_test_" + currentDateString;
     // Storage Options
     storage_options_.uri = s;
     storage_options_.storage_id = "sqlite3";
@@ -86,6 +92,13 @@ void ros2socketcan::start_bag(){
 
     writer_->open(storage_options_, converter_options_);
 }
+
+void ros2socketcan::write_to_bag(){
+    rclcpp::Time time_stamp = this->now();
+
+    writer_->write(motec_msg, "chatter", "std_msgs/msg/String", time_stamp);
+}
+
 
 ros2socketcan::~ros2socketcan(){printf("\nEnd of Publisher Thread. \n");}
 

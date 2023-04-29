@@ -2,6 +2,13 @@
 
 
 std_msgs/Header header
-int32 temp
-int32 bla
-int32 bla2
+float32 oil_temp
+float32 coolant_temp
+float32 oil_pressure
+float32 engine_rpm
+float32 throttle_position
+float32 battery_voltage
+int8 gear
+float32 fuel_pressure
+float32 front_brake_pressure
+float32 rear_brake_pressure
