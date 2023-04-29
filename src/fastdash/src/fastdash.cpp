@@ -78,6 +78,7 @@ void ros2socketcan::stop()
     printf("\nEnd of Listener Thread. Please press strg+c again to stop the whole program.\n");
     ios.stop();
     signals.clear();
+    gpioTerminate();
 //     if(BAG)
 //         writer_->close();
 }
