@@ -40,6 +40,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <pwd.h>
+#include <math.h>
 #include <sstream>
 #include <pigpio.h>
 
@@ -115,6 +116,8 @@ class ros2socketcan : public rclcpp::Node
         void end_bag();
 
         void write_to_bag();
+
+        int get_gear(double Mph, double RPM);
 
         void update_7seg();
         

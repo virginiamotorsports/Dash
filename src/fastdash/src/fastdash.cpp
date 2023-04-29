@@ -20,8 +20,7 @@ ros2socketcan::ros2socketcan(std::string can_socket): Node("datalogger"), stream
     i += gpioSetMode(g_pin, PI_OUTPUT);
 
     if(i != 0){
-        printf("GPIO init failed. Exiting.\n");
-        exit(1);
+        printf("GPIO init failed.\n");
     }
 
     writer_ = std::make_unique<rosbag2_cpp::writers::SequentialWriter>();
@@ -322,6 +321,29 @@ void update_7seg(int gear){
             break;
         }
     }
+}
+
+int get_gear(double Mph, double RPM){
+    const double Tire_diameter = 0.521;
+    const double Primary_Gear_Ratio = 2.073;
+    const double Differential_Ratio = 3.370;
+
+    double Gear_Trans_Ratio = (RPM * Tire_diameter * 6 * M_PI) / (Mph * Primary_Gear_Ratio * Differential_Ratio * 161);
+    
+    if (Gear_Trans_Ratio < 2.000){ // >= 2.583?
+        return 1;
+    } else if (Gear_Trans_Ratio < 1.667){ // >= 2.000?
+        return 2;
+    } else if (Gear_Trans_Ratio < 1.444){ // >= 1.667?
+        return 3;
+    } else if (Gear_Trans_Ratio < 1.286){ // >= 1.444?
+        return 4;
+    } else if (Gear_Trans_Ratio < 1.150){ // >= 1.286?
+        return 5;
+    } else if (Gear_Trans_Ratio < 1.0){
+        return 6;
+    } else
+        return 0;
 }
 
 
