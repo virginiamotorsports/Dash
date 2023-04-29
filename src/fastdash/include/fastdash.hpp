@@ -97,6 +97,7 @@ class ros2socketcan : public rclcpp::Node
         dash_msgs::msg::BrakeTemp brake_msg;
         dash_msgs::msg::MotecReport motec_msg;
         dash_msgs::msg::TeensyRear teensy_msg;
+        std::shared_ptr<rosbag2_storage::SerializedBagMessage> message_;
         std::unique_ptr<rosbag2_cpp::writers::SequentialWriter> writer_;
         rosbag2_storage::StorageOptions storage_options_;
         rosbag2_cpp::ConverterOptions converter_options_;
@@ -119,7 +120,7 @@ class ros2socketcan : public rclcpp::Node
 
         void initalize_topics();
 
-        void write_to_bag();
+        void write_to_bag(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
 
         int get_gear(double Mph, double RPM);
 

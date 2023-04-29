@@ -105,7 +105,7 @@ void ros2socketcan::start_bag(){
     writer_->open(storage_options_, converter_options_);
 }
 
-void ros2socketcan::write_to_bag(){
+void ros2socketcan::write_to_bag(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message){
     rclcpp::Time time_stamp = this->now();
 
     // writer_->write(motec_msg, "chatter", "std_msgs/msg/String", time_stamp);
@@ -200,36 +200,71 @@ void ros2socketcan::CanListener(struct can_frame& rec_frame, boost::asio::posix:
             break;
         }
         case(0x4C4):{
-            brake_msg.front_left[0] = ((((short)frame.data[0]) << 8) | frame.data[1] / 10.0);
-            brake_msg.front_left[1] = ((((short)frame.data[2]) << 8) | frame.data[3] / 10.0);
-            brake_msg.front_left[2] = ((((short)frame.data[4]) << 8) | frame.data[5] / 10.0);
-            brake_msg.front_left[3] = ((((short)frame.data[6]) << 8) | frame.data[7] / 10.0);
+            brake_msg.front_left[0] = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0 - 100.);
+            brake_msg.front_left[1] = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0 - 100.);
+            brake_msg.front_left[2] = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0 - 100.);
+            brake_msg.front_left[3] = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0 - 100.);
+            break;
         }
         case(0x4C5):{
+            brake_msg.front_left[4] = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0 - 100.);
+            brake_msg.front_left[5] = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0 - 100.);
+            brake_msg.front_left[6] = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0 - 100.);
+            brake_msg.front_left[7] = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0 - 100.);
             break;
         }
         case(0x4C6):{
+            brake_msg.front_left[8] = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0 - 100.);
+            brake_msg.front_left[9] = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0 - 100.);
+            brake_msg.front_left[10] = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0 - 100.);
+            brake_msg.front_left[11] = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0 - 100.);
             break;
         }
         case(0x4C7):{
+            brake_msg.front_left[12] = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0 - 100.);
+            brake_msg.front_left[13] = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0 - 100.);
+            brake_msg.front_left[14] = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0 - 100.);
+            brake_msg.front_left[15] = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0 - 100.);
             break;
         }
         case(0x4C8):{
+            brake_msg.front_left_sensor_temp = (frame.data[0] / 10.0 - 100.0);
+            break;
+        }
+        case(0x4C9):{
+            brake_msg.rear_left[0] = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0 - 100.);
+            brake_msg.rear_left[1] = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0 - 100.);
+            brake_msg.rear_left[2] = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0 - 100.);
+            brake_msg.rear_left[3] = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0 - 100.);
             break;
         }
         case(0x4CA):{
+            brake_msg.rear_left[4] = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0 - 100.);
+            brake_msg.rear_left[5] = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0 - 100.);
+            brake_msg.rear_left[6] = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0 - 100.);
+            brake_msg.rear_left[7] = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0 - 100.);
             break;
         }
         case(0x4CB):{
+            brake_msg.rear_left[8] = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0 - 100.);
+            brake_msg.rear_left[9] = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0 - 100.);
+            brake_msg.rear_left[10] = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0 - 100.);
+            brake_msg.rear_left[11] = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0 - 100.);
             break;
         }
         case(0x4CC):{
+            brake_msg.rear_left[12] = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0 - 100.);
+            brake_msg.rear_left[13] = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0 - 100.);
+            brake_msg.rear_left[14] = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0 - 100.);
+            brake_msg.rear_left[15] = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0 - 100.);
             break;
         }
         case(0x4CD):{
-            break;
-        }
-        case(0x4CE):{
+            brake_msg.rear_left_sensor_temp = (frame.data[0] / 10.0 - 100.0);
+            rclcpp::Time time_stamp = this->now();
+            rclcpp::SerializedMessage serialized_msg;
+            serialization_info.serialize_messsage(&brake_msg, &serialized_msg);
+            // this->writer_->write(dash_msgs::msg::BrakeTemp::serialize_cdr(this->brake_msg));
             break;
         }
     }
