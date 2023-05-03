@@ -53,6 +53,8 @@
 #include "rclcpp/serialization.hpp"
 #include "rclcpp/serialized_message.hpp"
 #include "can_msgs/msg/frame.hpp"
+
+#include <sys/stat.h>
 // #include "can_msgs/srv/can_request.hpp"
 #include <std_msgs/msg/string.hpp>
 #include "dash_msgs/msg/imu_report.hpp"

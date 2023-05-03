@@ -86,19 +86,21 @@ void fastdash::stop()
 }
 
 void fastdash::start_bag(){
-    
-    time_t currentTime = time(0);
-    tm* currentDate = localtime(&currentTime);
-    int year = currentDate->tm_year + 1900;
-    int month = currentDate->tm_mon + 1;
-    int day = currentDate->tm_mday;
-    int hour = currentDate->tm_hour;
-    int min = currentDate->tm_min;
-    int sec = currentDate->tm_sec;
     std::stringstream ss;
-    ss << this->homedir << "/bags/rosbag2_test_" << year << "_" << month << "_" << day << "_" << hour << "_" << min << "_" << sec;
-    std::string currentDateString = ss.str();
-    std::filesystem::path s = currentDateString;
+    ss << this->homedir << "/bags/rosbag2_recording_0";
+    struct stat sb;
+    int count = 1;
+    std::string filename = ss.str();
+    char c_filename[sizeof(filename)];
+    for(int i = 0; i < (int)sizeof(filename); i++){
+        c_filename[i] = filename[i];
+    }
+
+    while (stat(c_filename, &sb) == 0){
+        c_filename[sizeof(c_filename) - 1] = '0' + count;
+        count++;
+    }
+    std::filesystem::path s = c_filename;
     // Storage Options
     storage_options_.uri = s;
     storage_options_.storage_id = "sqlite3";
@@ -110,8 +112,8 @@ void fastdash::start_bag(){
     writer_->create_topic({"brake_temps", "dash_msgs/msg/BrakeTemp", rmw_get_serialization_format(),""});
     curr_bag_state = true;
 
-    std::string s1 = "Starting bag at " + currentDateString + "\n";
-    RCLCPP_INFO(this->get_logger(), s1.c_str());
+    // std::string s1 = "Starting bag at " + filename + "\n";
+    // RCLCPP_INFO(this->get_logger(), s1.c_str());
 }
 
 void fastdash::stop_bag(){
@@ -300,7 +302,6 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
             // uint8_t* serialized_data = reinterpret_cast<uint8_t*>(brake_msg);
             if(curr_bag_state){
                 writer_->write(brake_msg, "brake_temps", now());
-                printf("writing to bag");
             }
             break;
         }
