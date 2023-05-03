@@ -9,22 +9,23 @@ fastdash::fastdash(std::string can_socket): Node("datalogger"), stream(ios), sig
 {
     std::string s1 = "Using can socket " +  can_socket + "\n";
     RCLCPP_INFO(this->get_logger(), s1.c_str());
-    int i = 0;
+    // int i = 0;
 
-    i += gpioInitialise(); // this initializes the library. i dunno. it just does. 
-	i += gpioSetMode(a_pin, PI_OUTPUT); // set the relevant pins to output mode. 
-    i += gpioSetMode(b_pin,  PI_OUTPUT);
-    i += gpioSetMode(c_pin, PI_OUTPUT);
-    i += gpioSetMode(d_pin, PI_OUTPUT);
-    i += gpioSetMode(e_pin, PI_OUTPUT);
-    i += gpioSetMode(f_pin, PI_OUTPUT);
-    i += gpioSetMode(g_pin, PI_OUTPUT);
+    // i += gpioInitialise(); // this initializes the library. i dunno. it just does. 
+    // if(i != 0){
+    //     printf("GPIO init failed. %d\n", i);
+    // }
+	// i += gpioSetMode(a_pin, PI_OUTPUT); // set the relevant pins to output mode. 
+    // i += gpioSetMode(b_pin,  PI_OUTPUT);
+    // i += gpioSetMode(c_pin, PI_OUTPUT);
+    // i += gpioSetMode(d_pin, PI_OUTPUT);
+    // i += gpioSetMode(e_pin, PI_OUTPUT);
+    // i += gpioSetMode(f_pin, PI_OUTPUT);
+    // i += gpioSetMode(g_pin, PI_OUTPUT);
 
-    if(i != 0){
-        printf("GPIO init failed.\n");
-    }
+    
 
-    writer_ = std::make_unique<rosbag2_cpp::writers::SequentialWriter>();
+    writer_ = std::make_unique<rosbag2_cpp::Writer>();
     std::chrono::seconds bag_hyster(10);
     this->stop_timer = create_wall_timer(bag_hyster, std::bind(&fastdash::stop_bag, this));
     this->stop_timer->cancel();
@@ -58,6 +59,7 @@ fastdash::fastdash(std::string can_socket): Node("datalogger"), stream(ios), sig
     stream.assign(natsock);
 
     initalize_topics();
+    start_bag();
     
     // std::cout << "ROS2 to CAN-Bus topic:" << subscription_->get_topic_name() 	<< std::endl;
     // std::cout << "CAN-Bus to ROS2 topic:" << publisher_->get_topic_name() 	<< std::endl;
@@ -94,7 +96,7 @@ void fastdash::start_bag(){
     int min = currentDate->tm_min;
     int sec = currentDate->tm_sec;
     std::stringstream ss;
-    ss << this->homedir << "/bags/robag2_test_" << year << "_" << month << "_" << day << "_" << hour << "_" << min << "_" << sec;
+    ss << this->homedir << "/bags/rosbag2_test_" << year << "_" << month << "_" << day << "_" << hour << "_" << min << "_" << sec;
     std::string currentDateString = ss.str();
     std::filesystem::path s = currentDateString;
     // Storage Options
@@ -105,24 +107,32 @@ void fastdash::start_bag(){
     converter_options_.output_serialization_format = "cdr";
 
     writer_->open(storage_options_, converter_options_);
+    writer_->create_topic({"brake_temps", "dash_msgs/msg/BrakeTemp", rmw_get_serialization_format(),""});
+    curr_bag_state = true;
+
+    std::string s1 = "Starting bag at " + currentDateString + "\n";
+    RCLCPP_INFO(this->get_logger(), s1.c_str());
 }
 
 void fastdash::stop_bag(){
-    writer_->close();
+    // writer_->close();
     stop_timer->cancel();
+    curr_bag_state = false;
+
+    std::string s1 = "Stopping bag\n";
+    RCLCPP_INFO(this->get_logger(), s1.c_str());
 }
 
-void fastdash::write_to_bag(std::string topic_name, void* msg){
-    rcutils_time_point_value_t time_stamp_rcutils = this->now().nanoseconds();
-    uint8_t* serialized_data = reinterpret_cast<uint8_t*>(&msg);
-    this->ser_data_->buffer = serialized_data;
-    this->ser_data_->buffer_length = sizeof(msg);
-    this->ser_data_->buffer_capacity = sizeof(msg);
-    this->message_->serialized_data = ser_data_;
-    this->message_->topic_name = topic_name;
-    this->message_->time_stamp = time_stamp_rcutils;
-    this->writer_->write(this->message_);
-}
+// void fastdash::write_to_bag(std::string topic_name){
+//     if(curr_bag_state){
+//         bag_message->topic_name = topic_name;
+//         if (rcutils_system_time_now(&bag_message->time_stamp) != RCUTILS_RET_OK) {
+//         RCLCPP_ERROR(get_logger(), "Error getting current time: %s",
+//             rcutils_get_error_string().str);
+//         }
+//         writer_->write(bag_message);
+//     }
+// }
 
 void fastdash::initalize_topics(){
     rclcpp::Time time_stamp = this->now();
@@ -216,7 +226,6 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
                     this->stop_timer->cancel();
                 else{
                     start_bag();
-                    
                 }
                 prev_bag_state = true;
             }
@@ -288,8 +297,11 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
         }
         case(0x4CD):{
             brake_msg.rear_left_sensor_temp = (frame.data[0] / 10.0 - 100.0);
-            write_to_bag("brake_temp", &brake_msg);
-            
+            // uint8_t* serialized_data = reinterpret_cast<uint8_t*>(brake_msg);
+            if(curr_bag_state){
+                writer_->write(brake_msg, "brake_temps", now());
+                printf("writing to bag");
+            }
             break;
         }
     }

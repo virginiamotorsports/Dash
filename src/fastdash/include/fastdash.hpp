@@ -50,6 +50,8 @@
 //#include <thread>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp/serialization.hpp"
+#include "rclcpp/serialized_message.hpp"
 #include "can_msgs/msg/frame.hpp"
 // #include "can_msgs/srv/can_request.hpp"
 #include <std_msgs/msg/string.hpp>
@@ -60,6 +62,7 @@
 #include <rosbag2_cpp/writers/sequential_writer.hpp>
 #include <rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp>
 #include <rosbag2_storage/storage_options.hpp>
+#include <rosbag2_cpp/writer.hpp>
 
 // #include "log.h"
 
@@ -94,19 +97,23 @@ class fastdash : public rclcpp::Node
         rclcpp::TimerBase::SharedPtr timer_;
         const char *homedir;
         bool prev_bag_state = false;
+        bool curr_bag_state = false;
         dash_msgs::msg::ImuReport imu_msg;
         dash_msgs::msg::BrakeTemp brake_msg;
         dash_msgs::msg::MotecReport motec_msg;
         dash_msgs::msg::TeensyRear teensy_msg;
         std::shared_ptr<rcutils_uint8_array_t> ser_data_;
-        std::shared_ptr<rosbag2_storage::SerializedBagMessage> message_;
-        std::unique_ptr<rosbag2_cpp::writers::SequentialWriter> writer_;
+        std::unique_ptr<rosbag2_cpp::Writer> writer_;
         rosbag2_storage::StorageOptions storage_options_;
         rosbag2_cpp::ConverterOptions converter_options_;
         rclcpp::TimerBase::SharedPtr stop_timer;
         rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr publisher_;
         rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr test_pub_;
         rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr subscription_;
+        // rclcpp::Serialization<dash_msgs::msg::BrakeTemp> serialized_brake;
+        // rclcpp::Serialization<dash_msgs::msg::MotecReport> serialized_motec;
+        // rclcpp::SerializedMessage serialized_message;
+        // std::shared_ptr<rosbag2_storage::SerializedBagMessage> bag_message;
 
         // rclcpp::service::Service<can_msgs::srv::CanRequest>::SharedPtr server_ros2can_;
         
@@ -123,7 +130,7 @@ class fastdash : public rclcpp::Node
 
         void initalize_topics();
 
-        void write_to_bag(std::string topic_name, void* msg);
+        // void write_to_bag(std::string topic_name);
 
         int get_gear(double Mph, double RPM);
 
