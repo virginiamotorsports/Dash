@@ -196,8 +196,18 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
     }
 
     switch(frame.id){
-        case(120):{
-            motec_msg.engine_rpm = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0);
+        case(0x100):{
+            motec_msg.battery_voltage = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0);
+            motec_msg.fuel_pressure = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
+            motec_msg.coolant_temp = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0);
+            motec_msg.oil_pressure = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0);
+            break;
+        }
+        case(0x101):{
+            motec_msg.oil_pressure = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0);
+            sus_msg.rear_left_linpot = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
+            sus_msg.rear_right_linpot = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0);
+            motec_msg.engine_rpm = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0);
             if(motec_msg.engine_rpm > 800 && prev_bag_state == false){
                 if(!this->stop_timer->is_canceled())
                     this->stop_timer->cancel();
@@ -209,6 +219,21 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
             else if(motec_msg.engine_rpm < 600 && prev_bag_state == true){
                 this->stop_timer->reset();
                 prev_bag_state = false;
+            }
+            break;
+        }
+        case(0x102):{
+            motec_msg.throttle_position = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0);
+            motec_msg.front_brake_pressure = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
+            motec_msg.rear_brake_pressure = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0);
+            motec_msg.ecu_temp = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0);
+            break;
+        }
+        case(0x103):{
+            motec_msg.map_sensor = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0);
+            motec_msg.intake_air_temp = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
+            if(curr_bag_state){
+                writer_->write(motec_msg, MOTEC, now());
             }
             break;
         }

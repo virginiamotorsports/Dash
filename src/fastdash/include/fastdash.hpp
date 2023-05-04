@@ -61,6 +61,7 @@
 #include "dash_msgs/msg/brake_temp.hpp"
 #include "dash_msgs/msg/motec_report.hpp"
 #include "dash_msgs/msg/teensy_rear.hpp"
+#include "dash_msgs/msg/suspension_report.hpp"
 #include <rosbag2_cpp/writers/sequential_writer.hpp>
 #include <rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp>
 #include <rosbag2_storage/storage_options.hpp>
@@ -104,6 +105,7 @@ class fastdash : public rclcpp::Node
         dash_msgs::msg::BrakeTemp brake_msg;
         dash_msgs::msg::MotecReport motec_msg;
         dash_msgs::msg::TeensyRear teensy_msg;
+        dash_msgs::msg::SuspensionReport sus_msg;
         std::shared_ptr<rcutils_uint8_array_t> ser_data_;
         std::unique_ptr<rosbag2_cpp::Writer> writer_;
         rosbag2_storage::StorageOptions storage_options_;

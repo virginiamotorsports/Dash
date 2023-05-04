@@ -9,4 +9,6 @@ int8 gear
 float32 fuel_pressure
 float32 front_brake_pressure
 float32 rear_brake_pressure
+float32 ecu_temp
 float32 map_sensor
+float32 intake_air_temp
