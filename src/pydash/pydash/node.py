@@ -6,7 +6,7 @@ from threading import Thread
 from rclpy.node import Node
 
 from std_msgs.msg import Float32,Float64,Int32MultiArray,Int32,String,Bool
-from dash_msgs.msg import MotecReport
+from dash_msgs.msg import DashReport
 
 from pydash.gui import Gui
 
@@ -15,14 +15,8 @@ class GuiNode(Node):
         super().__init__("qt_gui_node")
         self.gui = gui
 
-        sub_list = [("/dash/motec_report", MotecReport)]
+        sub_list = [("dash_report", DashReport)]
 
-        qos = rclpy.qos.QoSProfile(
-                history=rclpy.qos.QoSHistoryPolicy.KEEP_LAST,
-                depth=1,
-                durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE,
-                reliability=rclpy.qos.QoSReliabilityPolicy.BEST_EFFORT
-                )
         for topic,topic_type in sub_list:
             self.create_subscription(topic_type, topic, lambda msg,topic=topic: self.gui.receive_msg(topic,msg), qos_profile=qos)
 

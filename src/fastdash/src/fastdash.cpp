@@ -21,6 +21,8 @@ fastdash::fastdash(std::string can_socket): Node("datalogger"), stream(ios), sig
     
     writer_ = std::make_unique<rosbag2_cpp::Writer>();
     std::chrono::seconds bag_hyster(10);
+    std::chrono::milliseconds pub_rate(100);
+    this->timer_ = create_wall_timer(pub_rate, std::bind(&fastdash::publish_msg, this));
     this->stop_timer = create_wall_timer(bag_hyster, std::bind(&fastdash::stop_bag, this));
     this->stop_timer->cancel();
 
@@ -105,12 +107,15 @@ void fastdash::start_bag(){
 }
 
 void fastdash::stop_bag(){
-    // writer_->close();
     stop_timer->cancel();
     curr_bag_state = false;
 
     std::string s1 = "Stopping bag\n";
     RCLCPP_INFO(this->get_logger(), s1.c_str());
+}
+
+void fastdash::publish_msg(){
+    publisher_->publish(dash_msg);
 }
 
 
@@ -141,7 +146,7 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
             sus_msg.rear_left_linpot = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
             sus_msg.rear_right_linpot = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0);
             motec_msg.engine_rpm = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0);
-            if(motec_msg.engine_rpm > 800 && prev_bag_state == false){
+            if(motec_msg.engine_rpm > 700 && prev_bag_state == false){
                 if(!this->stop_timer->is_canceled())
                     this->stop_timer->cancel();
                 else{
@@ -200,7 +205,7 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
             break;
         }
         case(0x4C8):{
-            brake_msg.front_left_sensor_temp = (frame.data[0]);
+            brake_msg.front_left_sensor_temp = (((((short)frame.data[0]) << 8) | frame.data[1]));
             break;
         }
         case(0x4C9):{
@@ -232,7 +237,7 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
             break;
         }
         case(0x4CD):{
-            brake_msg.rear_left_sensor_temp = (frame.data[0]);
+            brake_msg.rear_left_sensor_temp = (((((short)frame.data[0]) << 8) | frame.data[1]));
             if(curr_bag_state){
                 writer_->write(brake_msg, BRAKE, now());
             }
@@ -247,7 +252,15 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
 }
 
 int fastdash::get_gear(float Mph, float RPM){
-    float Gear_Trans_Ratio = (RPM * Tire_diameter * 6. * M_PI) / (Mph * Primary_Gear_Ratio * Differential_Ratio * 161.);
+    float Gear_Trans_Ratio = 0.0;
+    try{
+        Gear_Trans_Ratio = (RPM * Tire_diameter * 6. * M_PI) / (Mph * Primary_Gear_Ratio * Differential_Ratio * 161.);
+    }
+    catch(int myNum){
+        std::string s1 = "Error while trying to calc gear number\n";
+        RCLCPP_INFO(this->get_logger(), s1.c_str());
+        return 0;
+    }
     if (Gear_Trans_Ratio < 2.000){ // >= 2.583?
         return 1;
     } else if (Gear_Trans_Ratio < 1.667){ // >= 2.000?

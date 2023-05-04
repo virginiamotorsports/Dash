@@ -51,10 +51,10 @@ class Gui():
         self.running = False
     
     def receive_msg(self, topic_name, data):
-        switch = {"/dash/motec_report": self.motec_callback}
+        switch = {"dash_report": self.data_callback}
         switch[topic_name](data)
 
-    def motec_callback(self, data):
+    def data_callback(self, data):
         pass
 
     def update_widgets(self):

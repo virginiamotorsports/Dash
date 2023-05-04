@@ -123,6 +123,8 @@ class fastdash : public rclcpp::Node
 
         void stop_bag();
 
+        void publish_msg();
+
         int get_gear(float Mph, float RPM);
 
         /**
