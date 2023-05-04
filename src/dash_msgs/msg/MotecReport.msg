@@ -1,7 +1,4 @@
 #Decodes the motec data into a ros message which can be logged into a db3 file
-
-
-std_msgs/Header header
 float32 oil_temp
 float32 coolant_temp
 float32 oil_pressure
@@ -12,3 +9,4 @@ int8 gear
 float32 fuel_pressure
 float32 front_brake_pressure
 float32 rear_brake_pressure
+float32 map_sensor

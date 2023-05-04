@@ -130,7 +130,7 @@ class fastdash : public rclcpp::Node
 
         void stop_bag();
 
-        void initalize_topics();
+        // void initalize_topics();
 
         // void write_to_bag(std::string topic_name);
 

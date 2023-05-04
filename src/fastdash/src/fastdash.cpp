@@ -4,6 +4,10 @@ using std::placeholders::_1;
 using std::placeholders::_2;
 using std::placeholders::_3;
 #define DEBUG false
+#define BRAKE "break_temps"
+#define MOTEC "motec_report"
+#define SUSP "suspension_data"
+
 
 fastdash::fastdash(std::string can_socket): Node("datalogger"), stream(ios), signals(ios, SIGINT, SIGTERM)
 {
@@ -58,7 +62,7 @@ fastdash::fastdash(std::string can_socket): Node("datalogger"), stream(ios), sig
     }
     stream.assign(natsock);
 
-    initalize_topics();
+    // initalize_topics();
     start_bag();
     
     // std::cout << "ROS2 to CAN-Bus topic:" << subscription_->get_topic_name() 	<< std::endl;
@@ -78,6 +82,7 @@ fastdash::fastdash(std::string can_socket): Node("datalogger"), stream(ios), sig
 void fastdash::stop()
 {
     printf("\nEnd of Listener Thread. Please press strg+c again to stop the whole program.\n");
+    stop_bag();
     ios.stop();
     signals.clear();
     gpioTerminate();
@@ -109,7 +114,9 @@ void fastdash::start_bag(){
     converter_options_.output_serialization_format = "cdr";
 
     writer_->open(storage_options_, converter_options_);
-    writer_->create_topic({"brake_temps", "dash_msgs/msg/BrakeTemp", rmw_get_serialization_format(),""});
+    writer_->create_topic({BRAKE, "dash_msgs/msg/BrakeTemp", rmw_get_serialization_format(),""});
+    writer_->create_topic({MOTEC, "dash_msgs/msg/MotecReport", rmw_get_serialization_format(),""});
+    writer_->create_topic({SUSP, "dash_msgs/msg/SuspensionReport", rmw_get_serialization_format(),""});
     curr_bag_state = true;
 
     // std::string s1 = "Starting bag at " + filename + "\n";
@@ -125,26 +132,15 @@ void fastdash::stop_bag(){
     RCLCPP_INFO(this->get_logger(), s1.c_str());
 }
 
-// void fastdash::write_to_bag(std::string topic_name){
-//     if(curr_bag_state){
-//         bag_message->topic_name = topic_name;
-//         if (rcutils_system_time_now(&bag_message->time_stamp) != RCUTILS_RET_OK) {
-//         RCLCPP_ERROR(get_logger(), "Error getting current time: %s",
-//             rcutils_get_error_string().str);
-//         }
-//         writer_->write(bag_message);
-//     }
+// void fastdash::initalize_topics(){
+//     rclcpp::Time time_stamp = this->now();
+
+//     motec_msg.header = std_msgs::msg::Header();
+//     motec_msg.header.stamp = time_stamp;
+
+//     brake_msg.header = std_msgs::msg::Header();
+//     brake_msg.header.stamp = time_stamp;
 // }
-
-void fastdash::initalize_topics(){
-    rclcpp::Time time_stamp = this->now();
-
-    motec_msg.header = std_msgs::msg::Header();
-    motec_msg.header.stamp = time_stamp;
-
-    brake_msg.header = std_msgs::msg::Header();
-    brake_msg.header.stamp = time_stamp;
-}
 
 
 fastdash::~fastdash(){printf("\nEnd of Publisher Thread. \n");}
@@ -185,27 +181,6 @@ fastdash::~fastdash(){printf("\nEnd of Publisher Thread. \n");}
 //     printf("\n");
     
 //     stream.async_write_some(boost::asio::buffer(&frame1, sizeof(frame1)),std::bind(&fastdash::CanSendConfirm, this));
-// }
-
-
-// void fastdash::CanPublisher(const can_msgs::msg::Frame::SharedPtr msg)
-// {
-
-//     can_msgs::msg::Frame msg1;
-//     msg1.id  = msg->id;
-//     msg1.dlc = msg->dlc;
-//     msg1.is_extended = msg->is_extended;
-//     msg1.is_rtr = msg->is_rtr;
-//     msg1.is_error = msg->is_error;
-//     msg1.data= msg->data;
-    
-//     CanSend(msg1);
-    
-// }
-
-// void fastdash::CanSendConfirm(void)
-// {
-//     //std::cout << "Message sent" << std::endl;
 // }
 
 void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basic_stream_descriptor<>& stream)
@@ -266,7 +241,7 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
             break;
         }
         case(0x4C8):{
-            brake_msg.front_left_sensor_temp = (frame.data[0] / 10.0 - 100.0);
+            brake_msg.front_left_sensor_temp = (frame.data[0]);
             break;
         }
         case(0x4C9):{
@@ -298,10 +273,10 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
             break;
         }
         case(0x4CD):{
-            brake_msg.rear_left_sensor_temp = (frame.data[0] / 10.0 - 100.0);
+            brake_msg.rear_left_sensor_temp = (frame.data[0]);
             // uint8_t* serialized_data = reinterpret_cast<uint8_t*>(brake_msg);
             if(curr_bag_state){
-                writer_->write(brake_msg, "brake_temps", now());
+                writer_->write(brake_msg, BRAKE, now());
             }
             break;
         }
