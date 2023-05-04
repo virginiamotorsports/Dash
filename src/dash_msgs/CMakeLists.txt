@@ -11,6 +11,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 
 # uncomment the following section in order to fill in
@@ -20,10 +21,10 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ImuReport.msg"
   "msg/MotecReport.msg"
-  "msg/TeensyRear.msg"
-  "msg/BrakeTemp.msg"
+  "msg/BrakeReport.msg"
   "msg/SuspensionReport.msg"
-  DEPENDENCIES builtin_interfaces std_msgs
+  "msg/DashReport.msg"
+  DEPENDENCIES builtin_interfaces std_msgs geometry_msgs
  )
 
  

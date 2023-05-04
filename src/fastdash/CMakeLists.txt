@@ -52,7 +52,7 @@ include_directories(include)
 
 add_executable(fastdash include/fastdash.hpp src/fastdash.cpp)
 
-TARGET_LINK_LIBRARIES(fastdash dl -lpigpio)# -pthread  -lcrypt -lm -lpthread)
+# TARGET_LINK_LIBRARIES(fastdash dl -lpigpio)# -pthread  -lcrypt -lm -lpthread)
 
 ament_target_dependencies(fastdash rclcpp rosbag2_cpp std_msgs can_msgs dash_msgs example_interfaces)
 

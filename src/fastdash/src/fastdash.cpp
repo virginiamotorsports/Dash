@@ -3,32 +3,22 @@
 using std::placeholders::_1;
 using std::placeholders::_2;
 using std::placeholders::_3;
-#define DEBUG false
-#define BRAKE "brake_temps"
+#define DEBUG true
+#define BRAKE "brake_report"
 #define MOTEC "motec_report"
-#define SUSP "suspension_data"
+#define SUSP "suspension_report"
+#define DASH "dash_report"
+#define IMU "imu"
+#define Tire_diameter 0.521
+#define Primary_Gear_Ratio 2.073
+#define Differential_Ratio 3.370
 
 
 fastdash::fastdash(std::string can_socket): Node("datalogger"), stream(ios), signals(ios, SIGINT, SIGTERM)
 {
     std::string s1 = "Using can socket " +  can_socket + "\n";
     RCLCPP_INFO(this->get_logger(), s1.c_str());
-    // int i = 0;
-
-    // i += gpioInitialise(); // this initializes the library. i dunno. it just does. 
-    // if(i != 0){
-    //     printf("GPIO init failed. %d\n", i);
-    // }
-	// i += gpioSetMode(a_pin, PI_OUTPUT); // set the relevant pins to output mode. 
-    // i += gpioSetMode(b_pin,  PI_OUTPUT);
-    // i += gpioSetMode(c_pin, PI_OUTPUT);
-    // i += gpioSetMode(d_pin, PI_OUTPUT);
-    // i += gpioSetMode(e_pin, PI_OUTPUT);
-    // i += gpioSetMode(f_pin, PI_OUTPUT);
-    // i += gpioSetMode(g_pin, PI_OUTPUT);
-
     
-
     writer_ = std::make_unique<rosbag2_cpp::Writer>();
     std::chrono::seconds bag_hyster(10);
     this->stop_timer = create_wall_timer(bag_hyster, std::bind(&fastdash::stop_bag, this));
@@ -37,18 +27,10 @@ fastdash::fastdash(std::string can_socket): Node("datalogger"), stream(ios), sig
     if ((this->homedir = getenv("HOME")) == NULL) {
         this->homedir = getpwuid(getuid())->pw_dir;
     }
-
-
-    const char* canname = can_socket.c_str();
-        
-    topicname_receive 	<< "CAN/" << canname << "/" << "receive";
-    topicname_transmit 	<< "CAN/" << canname << "/" << "transmit";
       
     rclcpp::executors::MultiThreadedExecutor exec;
     
-    publisher_ 		= this->create_publisher<can_msgs::msg::Frame>(topicname_receive.str(), 1);
-    // test_pub_ 		= this->create_publisher<can_msgs::msg::Frame>(topicname_transmit.str(), 1);
-    // subscription_ 	= this->create_subscription<can_msgs::msg::Frame>(topicname_transmit.str(), std::bind(&fastdash::CanPublisher, this, _1));
+    publisher_ = this->create_publisher<dash_msgs::msg::DashReport>(DASH, 1);
     
     strcpy(ifr.ifr_name, can_socket.c_str());
     ioctl(natsock, SIOCGIFINDEX, &ifr);
@@ -63,7 +45,8 @@ fastdash::fastdash(std::string can_socket): Node("datalogger"), stream(ios), sig
     stream.assign(natsock);
 
     // initalize_topics();
-    start_bag();
+    if(DEBUG)
+        start_bag();
     
     // std::cout << "ROS2 to CAN-Bus topic:" << subscription_->get_topic_name() 	<< std::endl;
     // std::cout << "CAN-Bus to ROS2 topic:" << publisher_->get_topic_name() 	<< std::endl;
@@ -85,9 +68,6 @@ void fastdash::stop()
     stop_bag();
     ios.stop();
     signals.clear();
-    gpioTerminate();
-//     if(BAG)
-//         writer_->close();
 }
 
 void fastdash::start_bag(){
@@ -117,6 +97,7 @@ void fastdash::start_bag(){
     writer_->create_topic({BRAKE, "dash_msgs/msg/BrakeTemp", rmw_get_serialization_format(),""});
     writer_->create_topic({MOTEC, "dash_msgs/msg/MotecReport", rmw_get_serialization_format(),""});
     writer_->create_topic({SUSP, "dash_msgs/msg/SuspensionReport", rmw_get_serialization_format(),""});
+    writer_->create_topic({IMU, "dash_msgs/msg/ImuReport", rmw_get_serialization_format(),""});
     curr_bag_state = true;
 
     // std::string s1 = "Starting bag at " + filename + "\n";
@@ -132,56 +113,8 @@ void fastdash::stop_bag(){
     RCLCPP_INFO(this->get_logger(), s1.c_str());
 }
 
-// void fastdash::initalize_topics(){
-//     rclcpp::Time time_stamp = this->now();
-
-//     motec_msg.header = std_msgs::msg::Header();
-//     motec_msg.header.stamp = time_stamp;
-
-//     brake_msg.header = std_msgs::msg::Header();
-//     brake_msg.header.stamp = time_stamp;
-// }
-
 
 fastdash::~fastdash(){printf("\nEnd of Publisher Thread. \n");}
-
-// void fastdash::CanSend(const can_msgs::msg::Frame msg)
-// {
-//     struct can_frame frame1;
-    
-//     frame1.can_id = msg.id;
-    
-//     if (msg.is_extended == 1)
-//     {
-//         frame1.can_id  = frame1.can_id + CAN_EFF_FLAG;
-//     }
-    
-//     if (msg.is_error == 1)
-//     {
-//         frame1.can_id  = frame1.can_id + CAN_ERR_FLAG;
-//     }
-    
-//     if (msg.is_rtr == 1)
-//     {
-//         frame1.can_id  = frame1.can_id + CAN_RTR_FLAG;
-//     }
-    
-//     frame1.can_dlc = msg.dlc;
-
-//     for(int i=0;i<(int)frame1.can_dlc;i++)
-//     {
-//         frame1.data[i] = msg.data[i];
-//     }
-     
-//     printf("S | %x | %s | ", frame1.can_id, frame1.data);
-//     for(int j=0;j<(int)frame1.can_dlc;j++)
-//     {
-//         printf("%i ", frame1.data[j]);
-//     }
-//     printf("\n");
-    
-//     stream.async_write_some(boost::asio::buffer(&frame1, sizeof(frame1)),std::bind(&fastdash::CanSendConfirm, this));
-// }
 
 void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basic_stream_descriptor<>& stream)
 {
@@ -232,7 +165,7 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
         case(0x103):{
             motec_msg.map_sensor = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0);
             motec_msg.intake_air_temp = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
-            motec_msg.gear = get_gear(9, motec_msg.engine_rpm);
+            motec_msg.gear = get_gear(((sus_msg.front_right_wheel_speed + sus_msg.front_left_wheel_speed) / 2.), motec_msg.engine_rpm);
             if(curr_bag_state){
                 writer_->write(motec_msg, MOTEC, now());
             }
@@ -300,7 +233,6 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
         }
         case(0x4CD):{
             brake_msg.rear_left_sensor_temp = (frame.data[0]);
-            // uint8_t* serialized_data = reinterpret_cast<uint8_t*>(brake_msg);
             if(curr_bag_state){
                 writer_->write(brake_msg, BRAKE, now());
             }
@@ -314,130 +246,8 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
     
 }
 
-
-void update_7seg(int gear){
-    switch(gear)
-    {
-        case 0:
-        {
-            gpioWrite(a_pin,1);
-            gpioWrite(b_pin,1);
-            gpioWrite(c_pin,1);
-            gpioWrite(d_pin,1);
-            gpioWrite(e_pin,1);
-            gpioWrite(f_pin,1);
-            gpioWrite(g_pin,0);
-            break;
-        }
-        case 1:
-        {
-            gpioWrite(a_pin,0);
-            gpioWrite(b_pin,1);
-            gpioWrite(c_pin,1);
-            gpioWrite(d_pin,0);
-            gpioWrite(e_pin,0);
-            gpioWrite(f_pin,0);
-            gpioWrite(g_pin,0);
-            break;
-        }
-        case 2:
-        {
-            gpioWrite(a_pin,1);
-            gpioWrite(b_pin,1);
-            gpioWrite(c_pin,0);
-            gpioWrite(d_pin,1);
-            gpioWrite(e_pin,1);
-            gpioWrite(f_pin,0);
-            gpioWrite(g_pin,1);
-            break;
-        }
-        case 3:
-        {
-            gpioWrite(a_pin,1);
-            gpioWrite(b_pin,1);
-            gpioWrite(c_pin,1);
-            gpioWrite(d_pin,1);
-            gpioWrite(e_pin,0);
-            gpioWrite(f_pin,0);
-            gpioWrite(g_pin,1);
-            break;
-        }
-        case 4:
-        {
-            gpioWrite(a_pin,0);
-            gpioWrite(b_pin,1);
-            gpioWrite(c_pin,1);
-            gpioWrite(d_pin,0);
-            gpioWrite(e_pin,0);
-            gpioWrite(f_pin,1);
-            gpioWrite(g_pin,1);
-            break;
-        }
-        case 5:
-        {
-            gpioWrite(a_pin,1);
-            gpioWrite(b_pin,1);
-            gpioWrite(c_pin,1);
-            gpioWrite(d_pin,1);
-            gpioWrite(e_pin,1);
-            gpioWrite(f_pin,1);
-            gpioWrite(g_pin,1);
-            break;
-        }
-        case 6:
-        {
-            gpioWrite(a_pin,1);
-            gpioWrite(b_pin,0);
-            gpioWrite(c_pin,1);
-            gpioWrite(d_pin,1);
-            gpioWrite(e_pin,1);
-            gpioWrite(f_pin,1);
-            gpioWrite(g_pin,0);
-            break;
-        }
-        case 7:
-        {
-            gpioWrite(a_pin,1);
-            gpioWrite(b_pin,1);
-            gpioWrite(c_pin,1);
-            gpioWrite(d_pin,0);
-            gpioWrite(e_pin,0);
-            gpioWrite(f_pin,0);
-            gpioWrite(g_pin,0);
-            break;
-        }
-        case 8:
-        {
-            gpioWrite(a_pin,1);
-            gpioWrite(b_pin,1);
-            gpioWrite(c_pin,1);
-            gpioWrite(d_pin,1);
-            gpioWrite(e_pin,1);
-            gpioWrite(f_pin,1);
-            gpioWrite(g_pin,1);
-            break;
-        }
-        default:
-        {
-            gpioWrite(a_pin,1);
-            gpioWrite(b_pin,1);
-            gpioWrite(c_pin,1);
-            gpioWrite(d_pin,1);
-            gpioWrite(e_pin,1);
-            gpioWrite(f_pin,1);
-            gpioWrite(g_pin,0);
-            break;
-        }
-    }
-}
-
-int get_gear(double Mph, double RPM){
-    const double Tire_diameter = 0.521;
-    const double Primary_Gear_Ratio = 2.073;
-    const double Differential_Ratio = 3.370;
-
-    double Gear_Trans_Ratio = (RPM * Tire_diameter * 6 * M_PI) / (Mph * Primary_Gear_Ratio * Differential_Ratio * 161);
-    
+int fastdash::get_gear(float Mph, float RPM){
+    float Gear_Trans_Ratio = (RPM * Tire_diameter * 6. * M_PI) / (Mph * Primary_Gear_Ratio * Differential_Ratio * 161.);
     if (Gear_Trans_Ratio < 2.000){ // >= 2.583?
         return 1;
     } else if (Gear_Trans_Ratio < 1.667){ // >= 2.000?

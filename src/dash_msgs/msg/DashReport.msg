@@ -1,3 +1,3 @@
 float32 engine_rpm
 float32 coolant_temp
-float32 
+float32 wheel_speed

@@ -42,7 +42,6 @@
 #include <pwd.h>
 #include <math.h>
 #include <sstream>
-#include <pigpio.h>
 
 #include <boost/asio.hpp>
 //#include <boost/asio/io_service.hpp>
@@ -58,9 +57,9 @@
 // #include "can_msgs/srv/can_request.hpp"
 #include <std_msgs/msg/string.hpp>
 #include "dash_msgs/msg/imu_report.hpp"
-#include "dash_msgs/msg/brake_temp.hpp"
+#include "dash_msgs/msg/dash_report.hpp"
+#include "dash_msgs/msg/brake_report.hpp"
 #include "dash_msgs/msg/motec_report.hpp"
-#include "dash_msgs/msg/teensy_rear.hpp"
 #include "dash_msgs/msg/suspension_report.hpp"
 #include <rosbag2_cpp/writers/sequential_writer.hpp>
 #include <rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp>
@@ -102,24 +101,16 @@ class fastdash : public rclcpp::Node
         bool prev_bag_state = false;
         bool curr_bag_state = false;
         dash_msgs::msg::ImuReport imu_msg;
-        dash_msgs::msg::BrakeTemp brake_msg;
+        dash_msgs::msg::BrakeReport brake_msg;
         dash_msgs::msg::MotecReport motec_msg;
-        dash_msgs::msg::TeensyRear teensy_msg;
         dash_msgs::msg::SuspensionReport sus_msg;
+        dash_msgs::msg::DashReport dash_msg;
         std::shared_ptr<rcutils_uint8_array_t> ser_data_;
         std::unique_ptr<rosbag2_cpp::Writer> writer_;
         rosbag2_storage::StorageOptions storage_options_;
         rosbag2_cpp::ConverterOptions converter_options_;
         rclcpp::TimerBase::SharedPtr stop_timer;
-        rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr publisher_;
-        rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr test_pub_;
-        rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr subscription_;
-        // rclcpp::Serialization<dash_msgs::msg::BrakeTemp> serialized_brake;
-        // rclcpp::Serialization<dash_msgs::msg::MotecReport> serialized_motec;
-        // rclcpp::SerializedMessage serialized_message;
-        // std::shared_ptr<rosbag2_storage::SerializedBagMessage> bag_message;
-
-        // rclcpp::service::Service<can_msgs::srv::CanRequest>::SharedPtr server_ros2can_;
+        rclcpp::Publisher<dash_msgs::msg::DashReport>::SharedPtr publisher_;
         
         can_msgs::msg::Frame current_frame;
         
@@ -132,14 +123,8 @@ class fastdash : public rclcpp::Node
 
         void stop_bag();
 
-        // void initalize_topics();
+        int get_gear(float Mph, float RPM);
 
-        // void write_to_bag(std::string topic_name);
-
-        int get_gear(double Mph, double RPM);
-
-        void update_7seg();
-        
         /**
          * @brief The CanPublisher is listening to a ROS2 Topic and calls the CanSend Method.
          */
