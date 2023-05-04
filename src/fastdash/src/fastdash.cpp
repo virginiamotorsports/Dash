@@ -4,7 +4,7 @@ using std::placeholders::_1;
 using std::placeholders::_2;
 using std::placeholders::_3;
 #define DEBUG false
-#define BRAKE "break_temps"
+#define BRAKE "brake_temps"
 #define MOTEC "motec_report"
 #define SUSP "suspension_data"
 
@@ -197,7 +197,7 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
 
     switch(frame.id){
         case(0x100):{
-            motec_msg.battery_voltage = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0);
+            motec_msg.battery_voltage = (((((short)frame.data[0]) << 8) | frame.data[1]) / 100.0);
             motec_msg.fuel_pressure = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
             motec_msg.coolant_temp = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0);
             motec_msg.oil_pressure = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0);
@@ -232,6 +232,7 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
         case(0x103):{
             motec_msg.map_sensor = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0);
             motec_msg.intake_air_temp = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
+            motec_msg.gear = get_gear(9, motec_msg.engine_rpm);
             if(curr_bag_state){
                 writer_->write(motec_msg, MOTEC, now());
             }
