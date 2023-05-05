@@ -211,7 +211,7 @@ void fastdash::log_teensy(can_msgs::msg::Frame frame){
             motec_msg.coolant_temp = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0);
             motec_msg.oil_pressure = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0);
             if(curr_bag_state){
-                writer_->write(sus_report, SUSP, now());
+                writer_->write(sus_msg, SUSP, now());
             }
             break;
         }
