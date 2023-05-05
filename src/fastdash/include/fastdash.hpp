@@ -56,6 +56,8 @@
 #include <sys/stat.h>
 // #include "can_msgs/srv/can_request.hpp"
 #include <std_msgs/msg/string.hpp>
+#include "sensor_msgs/msg/imu.hpp"
+#include "sensor_msgs/msg/nav_sat_fix.hpp"
 #include "dash_msgs/msg/imu_report.hpp"
 #include "dash_msgs/msg/dash_report.hpp"
 #include "dash_msgs/msg/brake_report.hpp"
@@ -100,7 +102,8 @@ class fastdash : public rclcpp::Node
         const char *homedir;
         bool prev_bag_state = false;
         bool curr_bag_state = false;
-        dash_msgs::msg::ImuReport imu_msg;
+        sensor_msgs::msg::Imu imu_msg;
+        sensor_msgs::msg::NavSatFix gps_msg;
         dash_msgs::msg::BrakeReport brake_msg;
         dash_msgs::msg::MotecReport motec_msg;
         dash_msgs::msg::SuspensionReport sus_msg;
@@ -117,11 +120,18 @@ class fastdash : public rclcpp::Node
         /**
          * @brief The CanSendConfirm function is needed by the .async_write_some function and is called as confirmation for a successfull send process.
          */
+        void log_brake(can_msgs::msg::Frame frame);
+        void log_motec(can_msgs::msg::Frame frame);
+        void log_imu(can_msgs::msg::Frame frame);
+        void log_teensy(can_msgs::msg::Frame frame);
+
         void CanSendConfirm();
 
         void start_bag();
 
         void stop_bag();
+
+        void initialize_headers();
 
         void publish_msg();
 

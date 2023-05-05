@@ -29,6 +29,8 @@ find_package(rosbag2_cpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(can_msgs REQUIRED)
 find_package(dash_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 # find_package(lgpio REQUIRED)
 
 
@@ -54,7 +56,7 @@ add_executable(fastdash include/fastdash.hpp src/fastdash.cpp)
 
 # TARGET_LINK_LIBRARIES(fastdash dl -lpigpio)# -pthread  -lcrypt -lm -lpthread)
 
-ament_target_dependencies(fastdash rclcpp rosbag2_cpp std_msgs can_msgs dash_msgs example_interfaces)
+ament_target_dependencies(fastdash rclcpp rosbag2_cpp std_msgs can_msgs dash_msgs sensor_msgs nav_msgs example_interfaces)
 
 
 install(TARGETS

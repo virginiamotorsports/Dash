@@ -9,6 +9,7 @@ using std::placeholders::_3;
 #define SUSP "suspension_report"
 #define DASH "dash_report"
 #define IMU "imu"
+#define GPS "gps"
 #define Tire_diameter 0.521
 #define Primary_Gear_Ratio 2.073
 #define Differential_Ratio 3.370
@@ -99,11 +100,20 @@ void fastdash::start_bag(){
     writer_->create_topic({BRAKE, "dash_msgs/msg/BrakeTemp", rmw_get_serialization_format(),""});
     writer_->create_topic({MOTEC, "dash_msgs/msg/MotecReport", rmw_get_serialization_format(),""});
     writer_->create_topic({SUSP, "dash_msgs/msg/SuspensionReport", rmw_get_serialization_format(),""});
-    writer_->create_topic({IMU, "dash_msgs/msg/ImuReport", rmw_get_serialization_format(),""});
+    writer_->create_topic({IMU, "sensor_msgs/msg/Imu", rmw_get_serialization_format(),""});
+    writer_->create_topic({GPS, "sensor_msgs/msg/NavSatFix", rmw_get_serialization_format(),""});
     curr_bag_state = true;
 
     // std::string s1 = "Starting bag at " + filename + "\n";
     // RCLCPP_INFO(this->get_logger(), s1.c_str());
+}
+
+void fastdash::initialize_headers(){
+    imu_msg.header.frame_id = "imu_link";
+    imu_msg.header.stamp = this->get_clock()->now();
+
+    gps_msg.header.frame_id = "imu_link";
+    gps_msg.header.stamp = this->get_clock()->now();
 }
 
 void fastdash::stop_bag(){
@@ -132,7 +142,83 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
     {
          frame.data[i]=rec_frame.data[i];
     }
+    if(frame.id >= 0x100 && frame.id <= 0x103){
+        std::thread t1(&fastdash::log_motec, this, frame);
+        t1.join();
+    }
+    else if(frame.id >= 0x200 && frame.id <= 0x203){
+        std::thread t1(&fastdash::log_teensy, this, frame);
+        t1.join();
+    }
+    else if(frame.id >= 0x300 && frame.id <= 0x390){
+        std::thread t1(&fastdash::log_imu, this, frame);
+        t1.join();
+    }
+    else if(frame.id >= 0x300 && frame.id <= 0x390){
+        std::thread t1(&fastdash::log_brake, this, frame);
+        t1.join();
+    }
+    
+    stream.async_read_some(boost::asio::buffer(&rec_frame, sizeof(rec_frame)),std::bind(&fastdash::CanListener,this, std::ref(rec_frame),std::ref(stream)));
+    
+}
 
+void fastdash::log_imu(can_msgs::msg::Frame frame){
+    switch(frame.id){
+        case(0x321):{
+            imu_msg.linear_acceleration.x = (((((short)frame.data[0]) << 8) | frame.data[1]));
+            imu_msg.linear_acceleration.y = (((((short)frame.data[2]) << 8) | frame.data[3]));
+            imu_msg.linear_acceleration.z = (((((short)frame.data[4]) << 8) | frame.data[5]));
+            break;
+        }
+        case(0x331):{
+            imu_msg.orientation.x = (((((short)frame.data[0]) << 8) | frame.data[1]));
+            imu_msg.orientation.y = (((((short)frame.data[2]) << 8) | frame.data[3]));
+            imu_msg.orientation.z = (((((short)frame.data[4]) << 8) | frame.data[5]));
+            imu_msg.orientation.w = (((((short)frame.data[6]) << 8) | frame.data[7]));
+            break;
+        }
+        case(0x324):{
+            imu_msg.angular_velocity.x = (((((short)frame.data[0]) << 8) | frame.data[1]));
+            imu_msg.angular_velocity.y = (((((short)frame.data[2]) << 8) | frame.data[3]));
+            imu_msg.angular_velocity.z = (((((short)frame.data[4]) << 8) | frame.data[5]));
+            break;
+        }
+
+        case(0x377):{
+            // gps_msg.latitude = (((((short)frame.data[0]) << 8) | frame.data[1]));
+            // gps_msg.orientation.y = (((((short)frame.data[2]) << 8) | frame.data[3]));
+            // gps_msg.orientation.z = (((((short)frame.data[4]) << 8) | frame.data[5]));
+            // gps_msg.orientation.w = (((((short)frame.data[6]) << 8) | frame.data[7]));
+            imu_msg.header.stamp = this->get_clock()->now();
+            gps_msg.header.stamp = this->get_clock()->now();
+            if(curr_bag_state){
+                writer_->write(imu_msg, IMU, now());
+                writer_->write(gps_msg, GPS, now());
+            }
+            break;
+        }
+
+        
+    }
+}
+
+void fastdash::log_teensy(can_msgs::msg::Frame frame){
+    switch(frame.id){
+        case(0x200):{
+            motec_msg.battery_voltage = (((((short)frame.data[0]) << 8) | frame.data[1]) / 100.0);
+            motec_msg.fuel_pressure = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
+            motec_msg.coolant_temp = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0);
+            motec_msg.oil_pressure = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0);
+            if(curr_bag_state){
+                writer_->write(sus_report, SUSP, now());
+            }
+            break;
+        }
+    }
+}
+
+void fastdash::log_motec(can_msgs::msg::Frame frame){
     switch(frame.id){
         case(0x100):{
             motec_msg.battery_voltage = (((((short)frame.data[0]) << 8) | frame.data[1]) / 100.0);
@@ -176,6 +262,11 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
             }
             break;
         }
+    }
+}
+
+void fastdash::log_brake(can_msgs::msg::Frame frame){
+    switch(frame.id){
         case(0x4C4):{
             brake_msg.front_left[0] = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0 - 100.);
             brake_msg.front_left[1] = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0 - 100.);
@@ -244,12 +335,9 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
             break;
         }
     }
-    
-    // publisher_->publish(frame);
-  
-    stream.async_read_some(boost::asio::buffer(&rec_frame, sizeof(rec_frame)),std::bind(&fastdash::CanListener,this, std::ref(rec_frame),std::ref(stream)));
-    
 }
+
+
 
 int fastdash::get_gear(float Mph, float RPM){
     float Gear_Trans_Ratio = 0.0;
