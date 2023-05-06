@@ -22,7 +22,7 @@ class RPMGauge(QWidget):
         if self.rpm % (self.checkpoint * 2000) == 0 and self.rpm != 0:
             self.rpm -= 300
             self.checkpoint += 1
-        elif self.rpm >= 10000:
+        elif self.rpm >= 11000:
             self.rpm = 0
             self.checkpoint = 1
         else:
@@ -47,33 +47,38 @@ class RPMGauge(QWidget):
 
         # Draw the ticks and labels
         painter.setPen(QPen(Qt.black, 3, Qt.SolidLine))
-        font = QFont("Arial", 18, 60, False)
+        font = QFont("Arial", 20, 60, False)
         painter.setFont(font)
         painter.translate(width / 2, height / 2)
 
-        painter.rotate(210)  # position of 0 rpm
+        rpm_marks = [(-200, 150), (-240, 50), (-235, -55), (-185, -150), (-110, -210), (-20, -230),
+                     (70, -210), (145, -150), (195, -55), (200, 50), (145, 145), (90, 210)]
+        for i in range(len(rpm_marks)):
+            painter.drawText(rpm_marks[i][0], rpm_marks[i][1], str(i * 1000))
 
-        for i in range(51):
+        painter.rotate(-125)  # position of 0 rpm
+
+        for i in range(56):
             if i % 5 == 0:
                 painter.drawLine(0, -min_size // 2 + padding + 5, 0, -min_size // 2 + padding + 40)
 
-                painter.drawText(-20, -min_size // 2 + padding + 55, str(i // 5 * 1000))
+                # painter.drawText(-20, -min_size // 2 + padding + 55, str(i // 5 * 1000))
             else:
                 painter.drawLine(0, -min_size // 2 + padding + 5, 0, -min_size // 2 + padding + 25)
 
-            painter.rotate(6)
+            painter.rotate(5)
 
-        painter.rotate(204)
+        painter.rotate(205)
 
         # Draw the RPM value
-        font = QFont("Arial", 50, 60, False)
+        font = QFont("Arial", 70, 60, False)
         painter.setFont(font)
-        painter.drawText(-50, 170, str(self.rpm))
+        painter.drawText(-110, 210, str(self.rpm))
 
         # Draw the needle
         painter.setBrush(QBrush(QColor(255, 0, 0)))
         painter.setPen(QPen(Qt.NoPen))
-        painter.rotate(-150 + (self.rpm / 10000.0) * 300.0)
+        painter.rotate(-125 + (self.rpm / 11000.0) * 275.0)
         painter.drawConvexPolygon(QPolygon([
             QPoint(0, 0),
             QPoint(10, -5),
