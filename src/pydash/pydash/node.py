@@ -8,7 +8,8 @@ from rclpy.node import Node
 from std_msgs.msg import Float32,Float64,Int32MultiArray,Int32,String,Bool
 from dash_msgs.msg import DashReport
 
-from pydash.gui import Gui
+from pydash.node import RPMGauge
+from PyQt5.QtWidgets import QApplication, QWidget
 
 class GuiNode(Node):
     def __init__(self, gui):
@@ -33,13 +34,15 @@ def spin_node(gui):
 def main(args=None):
     rclpy.init(args=args)
 
-    gui = Gui()
+    app = QApplication(sys.argv)
+    gui = RPMGauge()
+    gui.show()
+    sys.exit(app.exec_())
 
     spinner_thread = Thread(target=spin_node,args=(gui,))
     spinner_thread.setDaemon(1)
     spinner_thread.start()
-
-    gui.run()
+    # gui.run()
 
 if __name__ == '__main__':
     main()
