@@ -11,6 +11,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QGridLayout
 from PyQt5.QtCore import Qt, QRunnable, QThread, QThreadPool, pyqtSignal
 import PyQt5.QtGui as QtGui
+from dash_msgs.msg import DashReport
 from pydash.rpm import RPMGauge
 from PyQt5.QtCore import QTimer
 from ament_index_python.packages import get_package_share_directory
@@ -20,6 +21,7 @@ class Gui():
     def __init__(self, args=[]):
         self.running = True
         self.b = False
+        self.dash_msg = DashReport()
         self.root = QApplication(args)
         self.window = QWidget()
         self.window.setWindowTitle("Dashboard")
@@ -58,6 +60,7 @@ class Gui():
         switch[topic_name](data)
 
     def data_callback(self, data):
+        self.dash_msg.wheel_speed = data.wheel_speed
         pass
 
     def update_widgets(self):
