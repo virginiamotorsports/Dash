@@ -21,11 +21,9 @@ fastdash::fastdash(std::string can_socket): Node("datalogger"), stream(ios), sig
     RCLCPP_INFO(this->get_logger(), s1.c_str());
     
     writer_ = std::make_unique<rosbag2_cpp::Writer>();
-    std::chrono::seconds bag_hyster(10);
     std::chrono::milliseconds pub_rate(100);
     this->timer_ = create_wall_timer(pub_rate, std::bind(&fastdash::publish_msg, this));
-    this->stop_timer = create_wall_timer(bag_hyster, std::bind(&fastdash::stop_bag, this));
-    this->stop_timer->cancel();
+    
 
     if ((this->homedir = getenv("HOME")) == NULL) {
         this->homedir = getpwuid(getuid())->pw_dir;
@@ -117,10 +115,10 @@ void fastdash::initialize_headers(){
 }
 
 void fastdash::stop_bag(){
-    stop_timer->cancel();
+
     curr_bag_state = false;
 
-    std::string s1 = "Stopping bag\n";
+    std::string s1 = "Stopping msg collection\n";
     RCLCPP_INFO(this->get_logger(), s1.c_str());
 }
 

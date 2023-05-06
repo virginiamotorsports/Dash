@@ -102,6 +102,7 @@ class fastdash : public rclcpp::Node
         const char *homedir;
         bool prev_bag_state = false;
         bool curr_bag_state = false;
+        
         sensor_msgs::msg::Imu imu_msg;
         sensor_msgs::msg::NavSatFix gps_msg;
         dash_msgs::msg::BrakeReport brake_msg;
