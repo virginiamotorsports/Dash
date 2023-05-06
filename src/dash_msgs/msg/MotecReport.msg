@@ -11,4 +11,5 @@ float32 front_brake_pressure
 float32 rear_brake_pressure
 float32 ecu_temp
 float32 map_sensor
+float32 wheel_speed
 float32 intake_air_temp

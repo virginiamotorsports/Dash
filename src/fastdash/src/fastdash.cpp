@@ -123,6 +123,12 @@ void fastdash::stop_bag(){
 }
 
 void fastdash::publish_msg(){
+    dash_msg.oil_temp = motec_msg.oil_temp;
+    dash_msg.engine_rpm = motec_msg.engine_rpm;
+    dash_msg.coolant_temp = motec_msg.coolant_temp;
+    dash_msg.oil_pressure = motec_msg.oil_pressure;
+    dash_msg.gear = motec_msg.gear;
+    dash_msg.wheel_speed = motec_msg.wheel_speed;
     publisher_->publish(dash_msg);
 }
 
@@ -204,13 +210,14 @@ void fastdash::log_imu(can_msgs::msg::Frame frame){
 void fastdash::log_teensy(can_msgs::msg::Frame frame){
     switch(frame.id){
         case(0x200):{
-            motec_msg.battery_voltage = (((((short)frame.data[0]) << 8) | frame.data[1]) / 100.0);
-            motec_msg.fuel_pressure = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
-            motec_msg.coolant_temp = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0);
-            motec_msg.oil_pressure = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0);
-            if(curr_bag_state){
-                writer_->write(sus_msg, SUSP, now());
-            }
+            sus_msg.front_left_linpot = (((((short)frame.data[0]) << 8) | frame.data[1]) / 100.0);
+            sus_msg.steering_wheel_angle = (((((short)frame.data[2]) << 8) | frame.data[3]) / 100.0);
+            sus_msg.front_right_linpot = (((((short)frame.data[4]) << 8) | frame.data[5]) / 100.0);
+            break;
+        }
+        case(0x201):{
+            sus_msg.front_left_wheel_speed = (((((short)frame.data[0]) << 8) | frame.data[1]) / 100.0);
+            sus_msg.front_right_wheel_speed = (((((short)frame.data[2]) << 8) | frame.data[3]) / 100.0);
             break;
         }
     }
@@ -241,7 +248,7 @@ void fastdash::log_motec(can_msgs::msg::Frame frame){
                 data_collection_hyst = this->get_clock()->now().nanoseconds();
             }
             if((long int)(this->get_clock()->now().nanoseconds()) - data_collection_hyst > 1000000000){
-                curr_bag_state = false;
+                stop_bag();
             }
             break;
         }
@@ -255,7 +262,8 @@ void fastdash::log_motec(can_msgs::msg::Frame frame){
         case(0x103):{
             motec_msg.map_sensor = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0);
             motec_msg.intake_air_temp = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
-            motec_msg.gear = get_gear(((sus_msg.front_right_wheel_speed + sus_msg.front_left_wheel_speed) / 2.), motec_msg.engine_rpm);
+            motec_msg.wheel_speed = (sus_msg.front_right_wheel_speed + sus_msg.front_left_wheel_speed) / 2.;
+            motec_msg.gear = get_gear(motec_msg.wheel_speed, motec_msg.engine_rpm);
             if(curr_bag_state){
                 writer_->write(motec_msg, MOTEC, now());
             }
