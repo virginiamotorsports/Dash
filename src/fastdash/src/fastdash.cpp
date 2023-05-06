@@ -23,8 +23,7 @@ fastdash::fastdash(std::string can_socket): Node("datalogger"), stream(ios), sig
     writer_ = std::make_unique<rosbag2_cpp::Writer>();
     std::chrono::milliseconds pub_rate(100);
     this->timer_ = create_wall_timer(pub_rate, std::bind(&fastdash::publish_msg, this));
-    
-
+    data_collection_hyst = -1;
     if ((this->homedir = getenv("HOME")) == NULL) {
         this->homedir = getpwuid(getuid())->pw_dir;
     }
@@ -46,8 +45,8 @@ fastdash::fastdash(std::string can_socket): Node("datalogger"), stream(ios), sig
     stream.assign(natsock);
 
     // initalize_topics();
-    if(DEBUG)
-        start_bag();
+    
+    start_bag();
     
     // std::cout << "ROS2 to CAN-Bus topic:" << subscription_->get_topic_name() 	<< std::endl;
     // std::cout << "CAN-Bus to ROS2 topic:" << publisher_->get_topic_name() 	<< std::endl;
@@ -100,7 +99,8 @@ void fastdash::start_bag(){
     writer_->create_topic({SUSP, "dash_msgs/msg/SuspensionReport", rmw_get_serialization_format(),""});
     writer_->create_topic({IMU, "sensor_msgs/msg/Imu", rmw_get_serialization_format(),""});
     writer_->create_topic({GPS, "sensor_msgs/msg/NavSatFix", rmw_get_serialization_format(),""});
-    curr_bag_state = true;
+    if(DEBUG)
+        curr_bag_state = true;
 
     // std::string s1 = "Starting bag at " + filename + "\n";
     // RCLCPP_INFO(this->get_logger(), s1.c_str());
@@ -231,16 +231,17 @@ void fastdash::log_motec(can_msgs::msg::Frame frame){
             sus_msg.rear_right_linpot = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0);
             motec_msg.engine_rpm = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0);
             if(motec_msg.engine_rpm > 700 && prev_bag_state == false){
-                if(!this->stop_timer->is_canceled())
-                    this->stop_timer->cancel();
-                else{
-                    start_bag();
-                }
+                if(data_collection_hyst != -1)
+                    data_collection_hyst = -1;
                 prev_bag_state = true;
+                curr_bag_state = true;
             }
             else if(motec_msg.engine_rpm < 600 && prev_bag_state == true){
-                this->stop_timer->reset();
                 prev_bag_state = false;
+                data_collection_hyst = this->get_clock()->now().nanoseconds();
+            }
+            if((long int)(this->get_clock()->now().nanoseconds()) - data_collection_hyst > 1000000000){
+                curr_bag_state = false;
             }
             break;
         }

@@ -102,7 +102,7 @@ class fastdash : public rclcpp::Node
         const char *homedir;
         bool prev_bag_state = false;
         bool curr_bag_state = false;
-        
+
         sensor_msgs::msg::Imu imu_msg;
         sensor_msgs::msg::NavSatFix gps_msg;
         dash_msgs::msg::BrakeReport brake_msg;
@@ -113,7 +113,7 @@ class fastdash : public rclcpp::Node
         std::unique_ptr<rosbag2_cpp::Writer> writer_;
         rosbag2_storage::StorageOptions storage_options_;
         rosbag2_cpp::ConverterOptions converter_options_;
-        rclcpp::TimerBase::SharedPtr stop_timer;
+        long data_collection_hyst;
         rclcpp::Publisher<dash_msgs::msg::DashReport>::SharedPtr publisher_;
         
         can_msgs::msg::Frame current_frame;
