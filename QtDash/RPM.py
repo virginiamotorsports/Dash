@@ -66,7 +66,9 @@ class RPMGauge(QWidget):
         painter.rotate(204)
 
         # Draw the RPM value
-        painter.drawText(-20, 50, str(self.rpm))
+        font = QFont("Arial", 50, 60, False)
+        painter.setFont(font)
+        painter.drawText(-50, 170, str(self.rpm))
 
         # Draw the needle
         painter.setBrush(QBrush(QColor(255, 0, 0)))
