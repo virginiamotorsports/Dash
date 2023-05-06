@@ -1,0 +1,1 @@
+colcon build --packages-select dash_msgs fastdash pydash

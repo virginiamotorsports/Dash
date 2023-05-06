@@ -99,7 +99,6 @@ class fastdash : public rclcpp::Node
 
     private:
         rclcpp::TimerBase::SharedPtr timer_;
-        const char *homedir;
         bool prev_bag_state = false;
         bool curr_bag_state = false;
 

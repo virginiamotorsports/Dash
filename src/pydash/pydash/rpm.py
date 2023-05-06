@@ -9,6 +9,7 @@ class RPMGauge(QWidget):
         super().__init__()
         self.rpm = 0
         self.setWindowTitle("RPM")
+        self.setWindowFlag(Qt.FramelessWindowHint)
         self.setGeometry(100, 100, 300, 300)
         self.setFixedSize(600, 600)
         self.setStyleSheet("background-color: white;")

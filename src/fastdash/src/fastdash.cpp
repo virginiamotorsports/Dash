@@ -24,9 +24,6 @@ fastdash::fastdash(std::string can_socket): Node("datalogger"), stream(ios), sig
     std::chrono::milliseconds pub_rate(100);
     this->timer_ = create_wall_timer(pub_rate, std::bind(&fastdash::publish_msg, this));
     data_collection_hyst = -1;
-    if ((this->homedir = getenv("HOME")) == NULL) {
-        this->homedir = getpwuid(getuid())->pw_dir;
-    }
       
     rclcpp::executors::MultiThreadedExecutor exec;
     
@@ -71,11 +68,9 @@ void fastdash::stop()
 }
 
 void fastdash::start_bag(){
-    std::stringstream ss;
-    ss << this->homedir << "/bags/rosbag2_recording_0";
     struct stat sb;
     int count = 1;
-    std::string filename = ss.str();
+    std::string filename = "/home/va/bags/rosbag2_recording_0";
     char c_filename[sizeof(filename)];
     for(int i = 0; i < (int)sizeof(filename); i++){
         c_filename[i] = filename[i];

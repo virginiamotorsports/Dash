@@ -1,5 +1,4 @@
 pythonping
 pyqtgraph
-PyQt5>=5.15.7
 numpy>=
 tcp-latency

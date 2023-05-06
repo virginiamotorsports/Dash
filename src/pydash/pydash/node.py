@@ -8,7 +8,7 @@ from rclpy.node import Node
 from std_msgs.msg import Float32,Float64,Int32MultiArray,Int32,String,Bool
 from dash_msgs.msg import DashReport
 
-from pydash.node import RPMGauge
+from pydash.rpm import RPMGauge
 from PyQt5.QtWidgets import QApplication, QWidget
 
 class GuiNode(Node):

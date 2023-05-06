@@ -11,6 +11,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QGridLayout
 from PyQt5.QtCore import Qt, QRunnable, QThread, QThreadPool, pyqtSignal
 import PyQt5.QtGui as QtGui
+from pydash.rpm import RPMGauge
 from PyQt5.QtCore import QTimer
 from ament_index_python.packages import get_package_share_directory
 image_folder = os.path.join(get_package_share_directory('pydash'), "images")
@@ -41,6 +42,8 @@ class Gui():
     def init_gui(self):
         self.layout = QGridLayout()
         self.window.setLayout(self.layout)
+        
+        self.window.addWidget()
 
 
     def run(self):
