@@ -8,11 +8,12 @@ from time import time as now
 from math import ceil, isnan
 
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QGridLayout
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QGridLayout, QStackedWidget
 from PyQt5.QtCore import Qt, QRunnable, QThread, QThreadPool, pyqtSignal
 import PyQt5.QtGui as QtGui
 from dash_msgs.msg import DashReport
 from pydash.rpm import RPMGauge
+from pydash.debug_screen import Debug_Screen
 from PyQt5.QtCore import QTimer
 from ament_index_python.packages import get_package_share_directory
 image_folder = os.path.join(get_package_share_directory('pydash'), "images")
@@ -21,9 +22,10 @@ class Gui():
     def __init__(self, args=[]):
         self.running = True
         self.b = False
+        self.num_windows = 3
         self.dash_msg = DashReport()
         self.root = QApplication(args)
-        self.window = QWidget()
+        self.window = QStackedWidget()
         self.window.setWindowTitle("Dashboard")
         self.window.setWindowFlag(Qt.FramelessWindowHint)
         self.init_gui()
@@ -41,12 +43,18 @@ class Gui():
         self.vehicle_state = 0
         self.car_position = (0,0)
 
-    def init_gui(self):
-        self.layout = QGridLayout()
-        self.window.setLayout(self.layout)
+    def init_gui(self):        
+        self.rpm_g = RPMGauge()
+        self.window.addWidget(self.rpm_g)
         
-        self.window.addWidget()
+        self.debug = Debug_Screen()
+        self.window.addWidget(self.debug)
 
+    def increment_screen(self):
+        if self.window.currentIndex() == self.num_windows - 1:
+            self.window.setCurrentIndex(0)
+        else:
+            self.window.setCurrentIndex(self.window.currentIndex() + 1)
 
     def run(self):
         sys.exit(self.root.exec())
@@ -60,8 +68,8 @@ class Gui():
         switch[topic_name](data)
 
     def data_callback(self, data):
-        self.dash_msg.wheel_speed = data.wheel_speed
-        pass
+        self.dash_msg = data
 
     def update_widgets(self):
-        pass
+        self.rpm_g.update_rpm(self.dash_msg.engine_rpm)
+        

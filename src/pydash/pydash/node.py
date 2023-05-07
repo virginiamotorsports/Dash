@@ -7,8 +7,7 @@ from rclpy.node import Node
 
 from std_msgs.msg import Float32,Float64,Int32MultiArray,Int32,String,Bool
 from dash_msgs.msg import DashReport
-
-from pydash.rpm import RPMGauge
+from pydash.gui import Gui
 from PyQt5.QtWidgets import QApplication, QWidget
 
 class GuiNode(Node):
@@ -19,7 +18,7 @@ class GuiNode(Node):
         sub_list = [("dash_report", DashReport)]
 
         for topic,topic_type in sub_list:
-            self.create_subscription(topic_type, topic, lambda msg,topic=topic: self.gui.receive_msg(topic,msg), qos_profile=qos)
+            self.create_subscription(topic_type, topic, lambda msg,topic=topic: self.gui.receive_msg(topic,msg), 1)
 
 def spin_node(gui):
     node = GuiNode(gui)
@@ -35,14 +34,11 @@ def main(args=None):
     rclpy.init(args=args)
 
     app = QApplication(sys.argv)
-    gui = RPMGauge()
-    gui.show()
-    sys.exit(app.exec_())
-
+    gui = Gui()
     spinner_thread = Thread(target=spin_node,args=(gui,))
     spinner_thread.setDaemon(1)
     spinner_thread.start()
-    # gui.run()
+    gui.run()
 
 if __name__ == '__main__':
     main()

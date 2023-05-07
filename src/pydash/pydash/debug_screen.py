@@ -4,7 +4,7 @@ from PyQt5.QtGui import QPainter, QBrush, QPen, QColor, QPolygon, QFont
 from PyQt5.QtWidgets import QApplication, QWidget
 
 
-class RPMGauge(QWidget):
+class Debug_Screen(QWidget):
     def __init__(self):
         super().__init__()
         self.rpm = 0
@@ -78,11 +78,3 @@ class RPMGauge(QWidget):
             QPoint(0, -min_size // 2 + padding + 20),
             QPoint(-10, -5),
         ]))
-
-
-# if __name__ == '__main__':
-#     app = QApplication(sys.argv)
-#     widget = RPMGauge()
-#     widget.show()
-#     sys.exit(app.exec_())
-
