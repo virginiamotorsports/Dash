@@ -1,80 +1,67 @@
 import sys
 from PyQt5.QtCore import Qt, QTimer, QPoint
 from PyQt5.QtGui import QPainter, QBrush, QPen, QColor, QPolygon, QFont
-from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QGridLayout
+
+
+class InfoClass(QWidget):
+      
+    def __init__(self, name, data = ""):
+        super().__init__()
+        self.layout = QGridLayout()
+        self.setLayout(self.layout)
+        self.infoText = QLabel(name)
+        self.infoText.setFont(QFont('Arial', 20))
+        self.infoData = QLabel(data)
+        self.infoData.setFont(QFont('Arial', 20))
+        #self.infoText.setStyleSheet("border: 1px solid black;")
+        self.infoData.setStyleSheet("color : red;")
+        self.layout.addWidget(self.infoText, 0, 0)
+        self.layout.addWidget(self.infoData, 0, 1)
+        self.data = data
+
+    def setName(self, name):
+        self.infoText.setText(name)
+        
+    def setData(self, data):
+        self.data = str(data)
+
+    def update(self, color = "red"):
+        self.infoData.setStyleSheet("color : " + color + ";")
+        self.infoData.setText(self.data)
+        #self.infoData.setStyleSheet("color : black;")
 
 
 class Debug_Screen(QWidget):
     def __init__(self):
         super().__init__()
-        self.rpm = 0
+        layout = QGridLayout()
         self.setStyleSheet("background-color: white;")
-        self.checkpoint = 1
+        self.engine_temp = InfoClass("Eng T")
+        self.oil_temp = InfoClass("Oil T")
+        self.oil_pres = InfoClass("Oil P")
+        self.rpm = InfoClass("RPM")
+        self.mph = InfoClass("MPH")
+        self.gear = InfoClass("gear")
+        
+        layout.addWidget(self.engine_temp, 0, 0, Qt.AlignLeft)
+        layout.addWidget(self.oil_temp, 0, 1, Qt.AlignLeft)
+        layout.addWidget(self.oil_pres, 1, 0, Qt.AlignLeft)
+        layout.addWidget(self.rpm, 1, 1, Qt.AlignLeft)
+        layout.addWidget(self.mph, 2, 0, Qt.AlignLeft)
+        layout.addWidget(self.gear, 2, 1, Qt.AlignLeft)
+        
+        self.setLayout(layout)
 
-    def update_rpm(self, rpm_value):
-        # Replace this with RPM code
-        # if self.rpm % (self.checkpoint * 2000) == 0 and self.rpm != 0:
-        #     self.rpm -= 300
-        #     self.checkpoint += 1
-        # elif self.rpm >= 11000:
-        #     self.rpm = 0
-        #     self.checkpoint = 1
-        # else:
-        #     self.rpm += 2
-        self.rpm = rpm_value
-        self.update()
 
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        width = self.width()
-        height = self.height()
-        min_size = min(width, height)
-        padding = 10
-        font_size = 12
-        rpm_font = painter.font()
-        rpm_font.setPointSize(font_size)
-        painter.setFont(rpm_font)
-
-        # Draw the outer circle
-        painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
-        painter.drawEllipse(padding, padding, min_size - padding * 2, min_size - padding * 2)
-
-        # Draw the ticks and labels
-        painter.setPen(QPen(Qt.black, 3, Qt.SolidLine))
-        font = QFont("Arial", 20, 60, False)
-        painter.setFont(font)
-        painter.translate(width / 2, height / 2)
-
-        rpm_marks = [(-200, 150), (-240, 50), (-235, -55), (-185, -150), (-110, -210), (-20, -230),
-                     (70, -210), (145, -150), (195, -55), (200, 50), (145, 145), (90, 210)]
-        for i in range(len(rpm_marks)):
-            painter.drawText(rpm_marks[i][0], rpm_marks[i][1], str(i * 1000))
-
-        painter.rotate(-125)  # position of 0 rpm
-
-        for i in range(56):
-            if i % 5 == 0:
-                painter.drawLine(0, -min_size // 2 + padding + 5, 0, -min_size // 2 + padding + 40)
-            else:
-                painter.drawLine(0, -min_size // 2 + padding + 5, 0, -min_size // 2 + padding + 25)
-
-            painter.rotate(5)
-
-        painter.rotate(205)
-
-        # Draw the RPM value
-        font = QFont("Arial", 70, 60, False)
-        painter.setFont(font)
-        painter.drawText(-110, 210, str(self.rpm))
-
-        # Draw the needle
-        painter.setBrush(QBrush(QColor(255, 0, 0)))
-        painter.setPen(QPen(Qt.NoPen))
-        painter.rotate(-125 + (self.rpm / 11000.0) * 275.0)
-        painter.drawConvexPolygon(QPolygon([
-            QPoint(0, 0),
-            QPoint(10, -5),
-            QPoint(0, -min_size // 2 + padding + 20),
-            QPoint(-10, -5),
-        ]))
+    def update_widget(self):
+        self.engine_temp.update()
+        self.oil_temp.update()
+        self.oil_pres.update()
+        self.rpm.update()
+        self.mph.update()
+        self.gear.update()
+        
+        
+        
+        

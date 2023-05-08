@@ -22,7 +22,7 @@ class Gui():
     def __init__(self, args=[]):
         self.running = True
         self.b = False
-        self.num_windows = 3
+        self.num_windows = 0
         self.dash_msg = DashReport()
         self.root = QApplication(args)
         self.window = QStackedWidget()
@@ -46,9 +46,11 @@ class Gui():
     def init_gui(self):        
         self.rpm_g = RPMGauge()
         self.window.addWidget(self.rpm_g)
+        self.num_windows+=1
         
         self.debug = Debug_Screen()
         self.window.addWidget(self.debug)
+        self.num_windows+=1
 
     def increment_screen(self):
         if self.window.currentIndex() == self.num_windows - 1:
@@ -71,5 +73,15 @@ class Gui():
         self.dash_msg = data
 
     def update_widgets(self):
-        self.rpm_g.update_rpm(self.dash_msg.engine_rpm)
+        if self.window.currentIndex() == 0:
+            self.rpm_g.update_rpm(self.dash_msg.engine_rpm)
+        elif self.window.currentIndex() == 1:
+            self.debug.gear.setData(self.dash_msg.gear)
+            self.debug.engine_temp.setData(self.dash_msg.coolant_temp)
+            self.debug.rpm.setData(self.dash_msg.engine_rpm)
+            self.debug.oil_pres.setData(self.dash_msg.oil_pressure)
+            self.debug.oil_temp.setData(self.dash_msg.oil_temp)
+            self.debug.mph.setData(self.dash_msg.wheel_speed)
+            self.debug.update_widget()
+        
         

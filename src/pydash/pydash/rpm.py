@@ -78,11 +78,3 @@ class RPMGauge(QWidget):
             QPoint(0, -min_size // 2 + padding + 20),
             QPoint(-10, -5),
         ]))
-
-
-# if __name__ == '__main__':
-#     app = QApplication(sys.argv)
-#     widget = RPMGauge()
-#     widget.show()
-#     sys.exit(app.exec_())
-
