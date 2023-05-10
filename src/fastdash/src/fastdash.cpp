@@ -70,14 +70,20 @@ void fastdash::stop()
 void fastdash::start_bag(){
     struct stat sb;
     int count = 1;
-    std::string filename = "/home/va/bags/rosbag2_recording_0";
+    std::string filename = "/home/va/bags/rosbag2_recording_000";
     char c_filename[sizeof(filename)];
     for(int i = 0; i < (int)sizeof(filename); i++){
         c_filename[i] = filename[i];
     }
 
     while (stat(c_filename, &sb) == 0){
-        c_filename[sizeof(c_filename) - 1] = '0' + count;
+        if(count < 10){
+            c_filename[sizeof(c_filename) - 1] = '0' + count;
+        }
+        else{
+            c_filename[sizeof(c_filename) - 2] = '0' + (count / 10);
+            c_filename[sizeof(c_filename) - 1] = '0' + (count % 10);
+        }
         count++;
     }
     std::filesystem::path s = c_filename;
@@ -142,20 +148,24 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
          frame.data[i]=rec_frame.data[i];
     }
     if(frame.id >= 0x100 && frame.id <= 0x103){
-        std::thread t1(&fastdash::log_motec, this, frame);
-        t1.join();
+        // std::thread t1(&fastdash::log_motec, this, frame);
+        // t1.join();
+        log_motec(frame);
     }
     else if(frame.id >= 0x200 && frame.id <= 0x203){
-        std::thread t1(&fastdash::log_teensy, this, frame);
-        t1.join();
+        // std::thread t1(&fastdash::log_teensy, this, frame);
+        // t1.join();
+        log_teensy(frame);
     }
     else if(frame.id >= 0x300 && frame.id <= 0x390){
-        std::thread t1(&fastdash::log_imu, this, frame);
-        t1.join();
+        // std::thread t1(&fastdash::log_imu, this, frame);
+        // t1.join();
+        log_imu(frame);
     }
     else if(frame.id >= 0x300 && frame.id <= 0x390){
-        std::thread t1(&fastdash::log_brake, this, frame);
-        t1.join();
+        // std::thread t1(&fastdash::log_brake, this, frame);
+        // t1.join();
+        log_brake(frame);
     }
     
     stream.async_read_some(boost::asio::buffer(&rec_frame, sizeof(rec_frame)),std::bind(&fastdash::CanListener,this, std::ref(rec_frame),std::ref(stream)));
