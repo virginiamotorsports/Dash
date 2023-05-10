@@ -70,21 +70,21 @@ class RPMGauge(QWidget):
 
         painter.rotate(205)
 
-        # Draw the RPM value
-        font = QFont("Arial", 70, 60, False)
-        painter.setFont(font)
-        painter.drawText(-110, 210, str(self.rpm))
+        # # Draw the RPM value
+        # font = QFont("Arial", 70, 60, False)
+        # painter.setFont(font)
+        # painter.drawText(-110, 210, str(self.rpm))
 
-        # Draw the needle
-        painter.setBrush(QBrush(QColor(255, 0, 0)))
-        painter.setPen(QPen(Qt.NoPen))
-        painter.rotate(-125 + (self.rpm / 11000.0) * 275.0)
-        painter.drawConvexPolygon(QPolygon([
-            QPoint(0, 0),
-            QPoint(10, -5),
-            QPoint(0, -min_size // 2 + padding + 20),
-            QPoint(-10, -5),
-        ]))
+        # # Draw the needle
+        # painter.setBrush(QBrush(QColor(255, 0, 0)))
+        # painter.setPen(QPen(Qt.NoPen))
+        # painter.rotate(-125 + (self.rpm / 11000.0) * 275.0)
+        # painter.drawConvexPolygon(QPolygon([
+        #     QPoint(0, 0),
+        #     QPoint(10, -5),
+        #     QPoint(0, -min_size // 2 + padding + 20),
+        #     QPoint(-10, -5),
+        # ]))
 
 
 if __name__ == '__main__':
