@@ -150,7 +150,7 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
     if(frame.id >= 0x100 && frame.id <= 0x103){
         // std::thread t1(&fastdash::log_motec, this, frame);
         // t1.join();
-        log_motec(frame);
+        log_motec(frame); // just moves data around for ease of reading
     }
     else if(frame.id >= 0x200 && frame.id <= 0x203){
         // std::thread t1(&fastdash::log_teensy, this, frame);
@@ -231,7 +231,7 @@ void fastdash::log_teensy(can_msgs::msg::Frame frame){
 void fastdash::log_motec(can_msgs::msg::Frame frame){
     switch(frame.id){
         case(0x100):{
-            motec_msg.battery_voltage = (((((short)frame.data[0]) << 8) | frame.data[1]) / 100.0);
+            motec_msg.battery_voltage = (((((short)frame.data[0]) << 8) | frame.data[1]) / 100.0); // this code turns the raw bytes into a short which is what we believe that messages come in as
             motec_msg.fuel_pressure = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
             motec_msg.coolant_temp = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0);
             motec_msg.oil_pressure = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0);
@@ -250,10 +250,10 @@ void fastdash::log_motec(can_msgs::msg::Frame frame){
             }
             else if(motec_msg.engine_rpm < 600 && prev_bag_state == true){
                 prev_bag_state = false;
-                data_collection_hyst = this->get_clock()->now().nanoseconds();
+                data_collection_hyst = this->get_clock()->now().nanoseconds(); // gets time that the engine rmp went below the limit
             }
             if((long int)(this->get_clock()->now().nanoseconds()) - data_collection_hyst > 1000000000){
-                stop_bag();
+                stop_bag(); // stops recording when the engine rpm was too low for 10s long
             }
             break;
         }

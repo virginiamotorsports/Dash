@@ -61,7 +61,3 @@ class Debug_Screen(QWidget):
         self.rpm.update()
         self.mph.update()
         self.gear.update()
-        
-        
-        
-        
