@@ -79,12 +79,12 @@ class Gui():
         if self.window.currentIndex() == 0:
             self.rpm_g.update_rpm(trunc(self.dash_msg.engine_rpm))
         elif self.window.currentIndex() == 1:
-            self.debug.gear.setData(self.dash_msg.gear)
+            self.debug.fuel.setData(round(self.dash_msg.fuel_pressure, 1))
             self.debug.engine_temp.setData(round(self.dash_msg.coolant_temp, 1))
             self.debug.rpm.setData(trunc(self.dash_msg.engine_rpm))
             self.debug.oil_pres.setData(round(self.dash_msg.oil_pressure, 1))
             self.debug.oil_temp.setData(round(self.dash_msg.oil_temp, 1))
-            self.debug.mph.setData(round(self.dash_msg.wheel_speed, 1))
+            self.debug.throttle.setData(round(self.dash_msg.throttle_pos, 1))
             self.debug.update_widget()
         
         

@@ -130,6 +130,8 @@ void fastdash::publish_msg(){
     dash_msg.oil_pressure = motec_msg.oil_pressure;
     dash_msg.gear = motec_msg.gear;
     dash_msg.wheel_speed = motec_msg.wheel_speed;
+    dash_msg.fuel_pressure = motec_msg.fuel_pressure;
+    dash_msg.throttle_pos = motec_msg.throttle_position;
     publisher_->publish(dash_msg);
 }
 

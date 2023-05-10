@@ -41,15 +41,15 @@ class Debug_Screen(QWidget):
         self.oil_temp = InfoClass("Oil T")
         self.oil_pres = InfoClass("Oil P")
         self.rpm = InfoClass("RPM")
-        self.mph = InfoClass("MPH")
-        self.gear = InfoClass("gear")
+        self.throttle = InfoClass("Thr %")
+        self.fuel = InfoClass("Fuel P")
         
         layout.addWidget(self.engine_temp, 0, 0, Qt.AlignCenter)
         layout.addWidget(self.oil_temp, 0, 1, Qt.AlignCenter)
         layout.addWidget(self.oil_pres, 1, 0, Qt.AlignCenter)
         layout.addWidget(self.rpm, 1, 1, Qt.AlignCenter)
-        layout.addWidget(self.mph, 2, 0, Qt.AlignCenter)
-        layout.addWidget(self.gear, 2, 1, Qt.AlignCenter)
+        layout.addWidget(self.throttle, 2, 0, Qt.AlignCenter)
+        layout.addWidget(self.fuel, 2, 1, Qt.AlignCenter)
         
         self.setLayout(layout)
 
@@ -59,5 +59,5 @@ class Debug_Screen(QWidget):
         self.oil_temp.update()
         self.oil_pres.update()
         self.rpm.update()
-        self.mph.update()
-        self.gear.update()
+        self.throttle.update()
+        self.fuel.update()
