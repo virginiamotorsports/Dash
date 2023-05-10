@@ -44,12 +44,12 @@ class Debug_Screen(QWidget):
         self.mph = InfoClass("MPH")
         self.gear = InfoClass("gear")
         
-        layout.addWidget(self.engine_temp, 0, 0, Qt.AlignLeft)
-        layout.addWidget(self.oil_temp, 0, 1, Qt.AlignLeft)
-        layout.addWidget(self.oil_pres, 1, 0, Qt.AlignLeft)
-        layout.addWidget(self.rpm, 1, 1, Qt.AlignLeft)
-        layout.addWidget(self.mph, 2, 0, Qt.AlignLeft)
-        layout.addWidget(self.gear, 2, 1, Qt.AlignLeft)
+        layout.addWidget(self.engine_temp, 0, 0, Qt.AlignCenter)
+        layout.addWidget(self.oil_temp, 0, 1, Qt.AlignCenter)
+        layout.addWidget(self.oil_pres, 1, 0, Qt.AlignCenter)
+        layout.addWidget(self.rpm, 1, 1, Qt.AlignCenter)
+        layout.addWidget(self.mph, 2, 0, Qt.AlignCenter)
+        layout.addWidget(self.gear, 2, 1, Qt.AlignCenter)
         
         self.setLayout(layout)
 
