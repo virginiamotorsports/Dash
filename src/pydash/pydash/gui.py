@@ -27,7 +27,7 @@ class Gui():
         GPIO.setmode(GPIO.BCM) # BCM pin 22
         self.button_pin = 22
         
-        GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         
         GPIO.add_event_detect(self.button_pin, GPIO.RISING, callback=self.increment_screen, bouncetime=500)
         
