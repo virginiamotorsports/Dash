@@ -24,12 +24,12 @@ image_folder = os.path.join(get_package_share_directory('pydash'), "images")
 class Gui():
     def __init__(self, args=[]):
         
-        GPIO.setmode(GPIO.BCM) # BCM pin 22
-        self.button_pin = 22
+        # GPIO.setmode(GPIO.BCM) # BCM pin 22
+        # self.button_pin = 22
         
-        GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        # GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         
-        GPIO.add_event_detect(self.button_pin, GPIO.RISING, callback=self.increment_screen, bouncetime=500)
+        # GPIO.add_event_detect(self.button_pin, GPIO.RISING, callback=self.increment_screen, bouncetime=500)
         
         self.running = True
         self.b = False
@@ -63,7 +63,7 @@ class Gui():
         self.window.addWidget(self.debug)
         self.num_windows+=1
         
-        # self.window.setCurrentIndex(1)
+        self.window.setCurrentIndex(1)
 
     def increment_screen(self, arg1):
         if self.window.currentIndex() == self.num_windows - 1:
