@@ -1,7 +1,9 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
+import os
 
 def generate_launch_description():
+    # print(os.getlogin())
     return LaunchDescription([
         Node(
             package='fastdash',
@@ -19,7 +21,7 @@ def generate_launch_description():
             name='gui',
             # Launch the node with root access (GPIO) in a shell
             additional_env={'DISPLAY': ':0'},
-            # prefix=["\"DISPLAY=:0\" \"PYTHONPATH=$PYTHONPATH\" \"LD_LIBRARY_PATH=$LD_LIBRARY_PATH\" \"PATH=$PATH\" \"USER=$USER\"  bash -c "],
+            # prefix=["sudo -E env \"PYTHONPATH=$PYTHONPATH\" \"LD_LIBRARY_PATH=$LD_LIBRARY_PATH\" \"PATH=$PATH\" \"USER=$USER\"  bash -c "],
             shell=True,
         ),
     ])

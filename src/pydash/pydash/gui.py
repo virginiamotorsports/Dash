@@ -25,7 +25,7 @@ class Gui():
     def __init__(self, args=[]):
         
         # GPIO.setmode(GPIO.BCM) # BCM pin 22
-        # self.button_pin = 22
+        # self.button_pin = 17
         
         # GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         
