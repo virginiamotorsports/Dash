@@ -53,7 +53,7 @@ class Gui():
         self.window.addWidget(self.debug)
         self.num_windows+=1
         
-        self.window.setCurrentIndex(1)
+        # self.window.setCurrentIndex(1)
 
     def increment_screen(self):
         if self.window.currentIndex() == self.num_windows - 1:
@@ -77,7 +77,7 @@ class Gui():
 
     def update_widgets(self):
         if self.window.currentIndex() == 0:
-            self.rpm_g.update_rpm(trunc(self.dash_msg.engine_rpm))
+            self.rpm_g.update_rpm(trunc(self.dash_msg.engine_rpm), self.dash_msg.gear)
         elif self.window.currentIndex() == 1:
             self.debug.fuel.setData(round(self.dash_msg.fuel_pressure, 1))
             self.debug.engine_temp.setData(round(self.dash_msg.coolant_temp, 1))
