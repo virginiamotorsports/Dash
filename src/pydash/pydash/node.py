@@ -1,5 +1,5 @@
 from xmlrpc.client import Boolean
-import rclpy
+import rclpy, time
 import sys
 import rclpy.qos
 from threading import Thread
@@ -32,12 +32,13 @@ def spin_node(gui):
 
 def main(args=None):
     rclpy.init(args=args)
-
+    # time.sleep(10)
     app = QApplication(sys.argv)
     gui = Gui()
     spinner_thread = Thread(target=spin_node,args=(gui,))
     spinner_thread.setDaemon(1)
     spinner_thread.start()
+
     gui.run()
 
 if __name__ == '__main__':
