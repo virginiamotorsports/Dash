@@ -254,7 +254,7 @@ void fastdash::log_motec(can_msgs::msg::Frame frame){
                 prev_bag_state = false;
                 data_collection_hyst = this->get_clock()->now().nanoseconds(); // gets time that the engine rmp went below the limit
             }
-            if((long int)(this->get_clock()->now().nanoseconds()) - data_collection_hyst > 1000000000){
+            if((long int)(this->get_clock()->now().nanoseconds()) - data_collection_hyst > 1000000000 && curr_bag_state == true){
                 stop_bag(); // stops recording when the engine rpm was too low for 10s long
             }
             break;

@@ -24,35 +24,37 @@ image_folder = os.path.join(get_package_share_directory('pydash'), "images")
 class Gui():
     def __init__(self, args=[]):
         
-        # GPIO.setmode(GPIO.BCM) # BCM pin 22
-        # self.button_pin = 17
-        
-        # GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        
-        # GPIO.add_event_detect(self.button_pin, GPIO.RISING, callback=self.increment_screen, bouncetime=500)
-        
         self.running = True
         self.b = False
         self.num_windows = 0
         self.dash_msg = DashReport()
         self.root = QApplication(args)
         self.window = QStackedWidget()
-        self.window.setWindowTitle("Dashboard")
-        self.window.setWindowFlag(Qt.FramelessWindowHint)
+        self.window.setFixedWidth(640)
+        self.window.setFixedHeight(480)
+        flags = Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.X11BypassWindowManagerHint
+        self.window.setWindowFlags(flags)
         self.init_gui()
-        self.windowIcon = QtGui.QIcon()
-        self.window.setWindowIcon(self.windowIcon)
+        # self.windowIcon = QtGui.QIcon()
+        # self.window.setWindowIcon(self.windowIcon)
         self.window.setStyleSheet("background-color: white;")
+        # self.window.showMinimized()
         self.window.showMaximized()
-        self.window.show()
+        # self.window.show()
 
         timeInterval = 50 # ms
         self.timer = QTimer(self.root, timeout=self.update_widgets, interval=timeInterval)
         self.timer.start()
+        
+        # self.timer2 = QTimer()
+        # self.timer2.timeout.connect(self.setup_pins)
+        # self.timer2.start(1000)
 
         self.track_state = 0
         self.vehicle_state = 0
         self.car_position = (0,0)
+        
+        
 
     def init_gui(self):        
         self.rpm_g = RPMGauge()
@@ -63,7 +65,11 @@ class Gui():
         self.window.addWidget(self.debug)
         self.num_windows+=1
         
-        self.window.setCurrentIndex(1)
+        # self.window.setCurrentIndex(1)
+        
+    # def reShow(self):
+    #     self.window.showMinimized()
+    #     self.window.setWindowState(self.window.windowState() and (not Qt.WindowMinimized or Qt.WindowActive))
 
     def increment_screen(self, arg1):
         if self.window.currentIndex() == self.num_windows - 1:
@@ -77,6 +83,19 @@ class Gui():
     def destroy(self):
         self.root.quit()
         self.running = False
+        
+    # def setup_pins(self):
+    #     try:
+    #         # GPIO.setmode(GPIO.BCM) # BCM pin 22
+    #         # self.button_pin = 17
+            
+    #         # GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+            
+    #         # GPIO.add_event_detect(self.button_pin, GPIO.RISING, callback=self.increment_screen, bouncetime=500)
+            
+    #         self.timer2.stop()
+    #     except:
+    #         print("Failed to get gpio pins")
     
     def receive_msg(self, topic_name, data):
         switch = {"dash_report": self.data_callback}
