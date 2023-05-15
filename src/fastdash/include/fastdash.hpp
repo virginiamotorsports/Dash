@@ -123,7 +123,6 @@ class fastdash : public rclcpp::Node
         void log_brake(can_msgs::msg::Frame frame);
         void log_motec(can_msgs::msg::Frame frame);
         void log_imu(can_msgs::msg::Frame frame);
-        void log_teensy(can_msgs::msg::Frame frame);
 
         void CanSendConfirm();
 

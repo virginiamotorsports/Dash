@@ -157,11 +157,6 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
     else if(frame.id >= 0x200 && frame.id <= 0x203){
         // std::thread t1(&fastdash::log_teensy, this, frame);
         // t1.join();
-        log_teensy(frame);
-    }
-    else if(frame.id >= 0x300 && frame.id <= 0x390){
-        // std::thread t1(&fastdash::log_imu, this, frame);
-        // t1.join();
         log_imu(frame);
     }
     else if(frame.id >= 0x300 && frame.id <= 0x390){
@@ -176,27 +171,27 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
 
 void fastdash::log_imu(can_msgs::msg::Frame frame){
     switch(frame.id){
-        case(0x321):{
+        case(0x221):{
             imu_msg.linear_acceleration.x = (((((short)frame.data[0]) << 8) | frame.data[1]));
             imu_msg.linear_acceleration.y = (((((short)frame.data[2]) << 8) | frame.data[3]));
             imu_msg.linear_acceleration.z = (((((short)frame.data[4]) << 8) | frame.data[5]));
             break;
         }
-        case(0x331):{
+        case(0x231):{
             imu_msg.orientation.x = (((((short)frame.data[0]) << 8) | frame.data[1]));
             imu_msg.orientation.y = (((((short)frame.data[2]) << 8) | frame.data[3]));
             imu_msg.orientation.z = (((((short)frame.data[4]) << 8) | frame.data[5]));
             imu_msg.orientation.w = (((((short)frame.data[6]) << 8) | frame.data[7]));
             break;
         }
-        case(0x324):{
+        case(0x224):{
             imu_msg.angular_velocity.x = (((((short)frame.data[0]) << 8) | frame.data[1]));
             imu_msg.angular_velocity.y = (((((short)frame.data[2]) << 8) | frame.data[3]));
             imu_msg.angular_velocity.z = (((((short)frame.data[4]) << 8) | frame.data[5]));
             break;
         }
 
-        case(0x377):{
+        case(0x277):{
             // gps_msg.latitude = (((((short)frame.data[0]) << 8) | frame.data[1]));
             // gps_msg.orientation.y = (((((short)frame.data[2]) << 8) | frame.data[3]));
             // gps_msg.orientation.z = (((((short)frame.data[4]) << 8) | frame.data[5]));
@@ -214,27 +209,14 @@ void fastdash::log_imu(can_msgs::msg::Frame frame){
     }
 }
 
-void fastdash::log_teensy(can_msgs::msg::Frame frame){
-    switch(frame.id){
-        case(0x200):{
-            sus_msg.front_left_linpot = (((((short)frame.data[0]) << 8) | frame.data[1]) / 100.0);
-            sus_msg.steering_wheel_angle = (((((short)frame.data[2]) << 8) | frame.data[3]) / 100.0);
-            sus_msg.front_right_linpot = (((((short)frame.data[4]) << 8) | frame.data[5]) / 100.0);
-            break;
-        }
-        case(0x201):{
-            sus_msg.front_left_wheel_speed = (((((short)frame.data[0]) << 8) | frame.data[1]) / 100.0);
-            sus_msg.front_right_wheel_speed = (((((short)frame.data[2]) << 8) | frame.data[3]) / 100.0);
-            break;
-        }
-    }
-}
-
 void fastdash::log_motec(can_msgs::msg::Frame frame){
     switch(frame.id){
         case(0x100):{
             motec_msg.battery_voltage = (((((short)frame.data[0]) << 8) | frame.data[1]) / 100.0); // this code turns the raw bytes into a short which is what we believe that messages come in as
             motec_msg.fuel_pressure = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
+            if(motec_msg.fuel_pressure > 1000){
+                motec_msg.fuel_pressure = 0;
+            }
             motec_msg.coolant_temp = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0);
             motec_msg.oil_pressure = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0);
             break;
@@ -243,7 +225,7 @@ void fastdash::log_motec(can_msgs::msg::Frame frame){
             motec_msg.oil_pressure = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0);
             sus_msg.rear_left_linpot = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
             sus_msg.rear_right_linpot = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0);
-            motec_msg.engine_rpm = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0);
+            motec_msg.engine_rpm = (((((short)frame.data[6]) << 8) | frame.data[7]));
             if(motec_msg.engine_rpm > 700 && prev_bag_state == false){
                 if(data_collection_hyst != -1)
                     data_collection_hyst = -1;
@@ -269,8 +251,8 @@ void fastdash::log_motec(can_msgs::msg::Frame frame){
         case(0x103):{
             motec_msg.map_sensor = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0);
             motec_msg.intake_air_temp = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
-            motec_msg.wheel_speed = (sus_msg.front_right_wheel_speed + sus_msg.front_left_wheel_speed) / 2.;
-            motec_msg.gear = get_gear(motec_msg.wheel_speed, motec_msg.engine_rpm);
+            motec_msg.gear = (((((short)frame.data[4]) << 8) | frame.data[5]));
+            motec_msg.wheel_speed = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0);
             if(curr_bag_state){
                 writer_->write(motec_msg, MOTEC, now());
             }
