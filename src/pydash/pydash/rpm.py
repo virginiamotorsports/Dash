@@ -25,7 +25,7 @@ class RPMGauge(QWidget):
     def update_rpm(self, rpm_value, gear):
         self.rpm = rpm_value
         if gear == 0:
-            self.gear = "N"
+            self.gear = ""
         else:
             self.gear = str(gear)
         self.update()

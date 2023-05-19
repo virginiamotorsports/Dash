@@ -23,7 +23,7 @@ fastdash::fastdash(std::string can_socket): Node("datalogger"), stream(ios), sig
     writer_ = std::make_unique<rosbag2_cpp::Writer>();
     std::chrono::milliseconds pub_rate(100);
     this->timer_ = create_wall_timer(pub_rate, std::bind(&fastdash::publish_msg, this));
-    data_collection_hyst = -1;
+    data_collection_hyst = this->get_clock()->now().nanoseconds();
       
     rclcpp::executors::MultiThreadedExecutor exec;
     
@@ -100,9 +100,10 @@ void fastdash::start_bag(){
     writer_->create_topic({SUSP, "dash_msgs/msg/SuspensionReport", rmw_get_serialization_format(),""});
     writer_->create_topic({IMU, "sensor_msgs/msg/Imu", rmw_get_serialization_format(),""});
     writer_->create_topic({GPS, "sensor_msgs/msg/NavSatFix", rmw_get_serialization_format(),""});
-    if(DEBUG)
+    if(DEBUG){
         curr_bag_state = true;
-
+        prev_bag_state = true;
+    }
     // std::string s1 = "Starting bag at " + filename + "\n";
     // RCLCPP_INFO(this->get_logger(), s1.c_str());
 }
@@ -198,13 +199,13 @@ void fastdash::log_imu(can_msgs::msg::Frame frame){
             // gps_msg.orientation.w = (((((short)frame.data[6]) << 8) | frame.data[7]));
             imu_msg.header.stamp = this->get_clock()->now();
             gps_msg.header.stamp = this->get_clock()->now();
-            if(curr_bag_state){
-                writer_->write(imu_msg, IMU, now());
-                writer_->write(gps_msg, GPS, now());
-            }
+            
             break;
         }
-
+        if(curr_bag_state){
+            writer_->write(imu_msg, IMU, now());
+            writer_->write(gps_msg, GPS, now());
+        }
         
     }
 }
@@ -222,7 +223,7 @@ void fastdash::log_motec(can_msgs::msg::Frame frame){
             break;
         }
         case(0x101):{
-            motec_msg.oil_pressure = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0);
+            motec_msg.oil_temp = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0);
             sus_msg.rear_left_linpot = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
             sus_msg.rear_right_linpot = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0);
             motec_msg.engine_rpm = (((((short)frame.data[6]) << 8) | frame.data[7]));
@@ -232,11 +233,11 @@ void fastdash::log_motec(can_msgs::msg::Frame frame){
                 prev_bag_state = true;
                 curr_bag_state = true;
             }
-            else if(motec_msg.engine_rpm < 600 && prev_bag_state == true){
+            else if(motec_msg.engine_rpm < 400 && prev_bag_state == true){
                 prev_bag_state = false;
                 data_collection_hyst = this->get_clock()->now().nanoseconds(); // gets time that the engine rmp went below the limit
             }
-            if((long int)(this->get_clock()->now().nanoseconds()) - data_collection_hyst > 1000000000 && curr_bag_state == true){
+            if((long int)(this->get_clock()->now().nanoseconds()) - data_collection_hyst > 1000000000 && curr_bag_state == true && prev_bag_state == false){
                 stop_bag(); // stops recording when the engine rpm was too low for 10s long
             }
             break;
@@ -253,11 +254,12 @@ void fastdash::log_motec(can_msgs::msg::Frame frame){
             motec_msg.intake_air_temp = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
             motec_msg.gear = (((((short)frame.data[4]) << 8) | frame.data[5]));
             motec_msg.wheel_speed = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0);
-            if(curr_bag_state){
-                writer_->write(motec_msg, MOTEC, now());
-            }
+            motec_msg.gear = get_gear(motec_msg.wheel_speed, motec_msg.engine_rpm);
             break;
         }
+    }
+    if(curr_bag_state){
+        writer_->write(motec_msg, MOTEC, now());
     }
 }
 
@@ -325,11 +327,12 @@ void fastdash::log_brake(can_msgs::msg::Frame frame){
         }
         case(0x4CD):{
             brake_msg.rear_left_sensor_temp = (((((short)frame.data[0]) << 8) | frame.data[1]));
-            if(curr_bag_state){
-                writer_->write(brake_msg, BRAKE, now());
-            }
+            
             break;
         }
+    }
+    if(curr_bag_state){
+        writer_->write(brake_msg, BRAKE, now());
     }
 }
 

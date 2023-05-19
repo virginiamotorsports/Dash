@@ -7,7 +7,7 @@ from rclpy.clock import Clock
 from time import time as now
 from math import ceil, isnan
 
-import RPi.GPIO as GPIO
+# import RPi.GPIO as GPIO
 
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QGridLayout, QStackedWidget
@@ -15,6 +15,8 @@ from PyQt5.QtCore import Qt, QRunnable, QThread, QThreadPool, pyqtSignal
 import PyQt5.QtGui as QtGui
 from dash_msgs.msg import DashReport
 from pydash.rpm import RPMGauge
+from pydash.brake_screen import BrakeGauge
+from pydash.skid_screen import SkidGauge
 from math import trunc
 from pydash.debug_screen import Debug_Screen
 from PyQt5.QtCore import QTimer
@@ -24,12 +26,12 @@ image_folder = os.path.join(get_package_share_directory('pydash'), "images")
 class Gui():
     def __init__(self, args=[]):
         
-        GPIO.setmode(GPIO.BCM) # BCM pin 22
-        self.button_pin = 17
+        # GPIO.setmode(GPIO.BCM) # BCM pin 22
+        # self.button_pin = 17
         
-        GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        # GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         
-        GPIO.add_event_detect(self.button_pin, GPIO.RISING, callback=self.increment_screen, bouncetime=500)
+        # GPIO.add_event_detect(self.button_pin, GPIO.RISING, callback=self.increment_screen, bouncetime=500)
         
         self.running = True
         self.b = False
@@ -72,17 +74,25 @@ class Gui():
         self.window.addWidget(self.debug)
         self.num_windows+=1
         
-        # self.window.setCurrentIndex(1)
+        self.brake = BrakeGauge()
+        self.window.addWidget(self.brake)
+        self.num_windows+=1
+        
+        self.skid = SkidGauge()
+        self.window.addWidget(self.skid)
+        self.num_windows+=1
+        
+        self.window.setCurrentIndex(3)
         
     # def reShow(self):
     #     self.window.showMinimized()
     #     self.window.setWindowState(self.window.windowState() and (not Qt.WindowMinimized or Qt.WindowActive))
 
-    def increment_screen(self, arg1):
-        if self.window.currentIndex() == self.num_windows - 1:
-            self.window.setCurrentIndex(0)
-        else:
-            self.window.setCurrentIndex(self.window.currentIndex() + 1)
+    # def increment_screen(self, arg1):
+    #     if self.window.currentIndex() == self.num_windows - 1:
+    #         self.window.setCurrentIndex(0)
+    #     else:
+    #         self.window.setCurrentIndex(self.window.currentIndex() + 1)
 
     def run(self):
         sys.exit(self.root.exec())
@@ -105,6 +115,7 @@ class Gui():
 
     def data_callback(self, data):
         self.dash_msg = data
+        # print(data)
 
     def update_widgets(self):
         if self.window.currentIndex() == 0:
@@ -112,10 +123,17 @@ class Gui():
         elif self.window.currentIndex() == 1:
             self.debug.fuel.setData(round(self.dash_msg.fuel_pressure, 1))
             self.debug.engine_temp.setData(round(self.dash_msg.coolant_temp, 1))
-            self.debug.rpm.setData(trunc(self.dash_msg.engine_rpm))
+            self.debug.rpm.setData(round(self.dash_msg.engine_rpm, -2))
             self.debug.oil_pres.setData(round(self.dash_msg.oil_pressure, 1))
             self.debug.oil_temp.setData(round(self.dash_msg.oil_temp, 1))
             self.debug.throttle.setData(round(self.dash_msg.throttle_pos, 1))
             self.debug.update_widget()
-        
+        elif self.window.currentIndex() == 2:
+            self.brake.throttle.setData(round(self.dash_msg.throttle_pos, 1))
+            self.brake.rpm.setData(round(self.dash_msg.engine_rpm, -2))
+            self.brake.update_widget()
+        elif self.window.currentIndex() == 3:
+            self.skid.throttle.setData(round(self.dash_msg.throttle_pos, 1))
+            self.skid.rpm.setData(round(self.dash_msg.engine_rpm, -2))
+            self.skid.update_widget(self.dash_msg.gear)
         
