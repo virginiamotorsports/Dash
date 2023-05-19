@@ -38,14 +38,14 @@ class SkidGauge(QWidget):
         layout = QGridLayout()
         self.setStyleSheet("background-color: white;")
 
-        self.rpm = InfoClass("RPM  ")
-        self.throttle = InfoClass("Thr %  ")
+        self.rpm = InfoClass("RPM ")
+        self.throttle = InfoClass("Thr % ")
         self.gear_disp = QLabel("")
         self.gear_disp.setFont(QFont('Arial', 80))
 
         layout.addWidget(self.rpm, 0, 0, Qt.AlignLeft)
         layout.addWidget(self.throttle, 1, 0, Qt.AlignLeft)
-        layout.addWidget(self.gear, 0, 1, 2, 1, Qt.AlignCenter)
+        layout.addWidget(self.gear_disp, 0, 1, 2, 1, Qt.AlignCenter)
         
         self.setLayout(layout)
 
