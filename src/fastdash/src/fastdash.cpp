@@ -95,7 +95,7 @@ void fastdash::start_bag(){
     converter_options_.output_serialization_format = "cdr";
 
     writer_->open(storage_options_, converter_options_);
-    writer_->create_topic({BRAKE, "dash_msgs/msg/BrakeTemp", rmw_get_serialization_format(),""});
+    writer_->create_topic({BRAKE, "dash_msgs/msg/BrakeReport", rmw_get_serialization_format(),""});
     writer_->create_topic({MOTEC, "dash_msgs/msg/MotecReport", rmw_get_serialization_format(),""});
     writer_->create_topic({SUSP, "dash_msgs/msg/SuspensionReport", rmw_get_serialization_format(),""});
     writer_->create_topic({IMU, "sensor_msgs/msg/Imu", rmw_get_serialization_format(),""});
@@ -119,7 +119,7 @@ void fastdash::initialize_headers(){
 void fastdash::stop_bag(){
 
     curr_bag_state = false;
-
+    
     std::string s1 = "Stopping msg collection\n";
     RCLCPP_INFO(this->get_logger(), s1.c_str());
 }
@@ -155,12 +155,12 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
         // t1.join();
         log_motec(frame); // just moves data around for ease of reading
     }
-    else if(frame.id >= 0x200 && frame.id <= 0x203){
+    else if(frame.id >= 0x300 && frame.id <= 0x3FF){
         // std::thread t1(&fastdash::log_teensy, this, frame);
         // t1.join();
         log_imu(frame);
     }
-    else if(frame.id >= 0x300 && frame.id <= 0x390){
+    else if(frame.id >= 0x400 && frame.id <= 0x490){
         // std::thread t1(&fastdash::log_brake, this, frame);
         // t1.join();
         log_brake(frame);
@@ -172,41 +172,42 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
 
 void fastdash::log_imu(can_msgs::msg::Frame frame){
     switch(frame.id){
-        case(0x221):{
-            imu_msg.linear_acceleration.x = (((((short)frame.data[0]) << 8) | frame.data[1]));
-            imu_msg.linear_acceleration.y = (((((short)frame.data[2]) << 8) | frame.data[3]));
-            imu_msg.linear_acceleration.z = (((((short)frame.data[4]) << 8) | frame.data[5]));
+        case(0x321):{
+            imu_msg.linear_acceleration.x = static_cast<float>(short ((frame.data[1] << 8) | (frame.data[0]))) / 256.0;
+            imu_msg.linear_acceleration.y = static_cast<float>(short ((frame.data[3] << 8) | (frame.data[2]))) / 256.0;
+            imu_msg.linear_acceleration.z = static_cast<float>(short ((frame.data[5] << 8) | (frame.data[4]))) / 256.0;
             break;
         }
-        case(0x231):{
-            imu_msg.orientation.x = (((((short)frame.data[0]) << 8) | frame.data[1]));
-            imu_msg.orientation.y = (((((short)frame.data[2]) << 8) | frame.data[3]));
-            imu_msg.orientation.z = (((((short)frame.data[4]) << 8) | frame.data[5]));
-            imu_msg.orientation.w = (((((short)frame.data[6]) << 8) | frame.data[7]));
+        case(0x331):{
+            imu_msg.orientation.x = static_cast<float>(short ((frame.data[1] << 8) | (frame.data[0]))) / 256.0;
+            imu_msg.orientation.y = static_cast<float>(short ((frame.data[3] << 8) | (frame.data[2]))) / 256.0;
+            imu_msg.orientation.z = static_cast<float>(short ((frame.data[5] << 8) | (frame.data[4]))) / 256.0;
+            imu_msg.orientation.w = static_cast<float>(short ((frame.data[7] << 8) | (frame.data[6]))) / 256.0;
             break;
         }
-        case(0x224):{
-            imu_msg.angular_velocity.x = (((((short)frame.data[0]) << 8) | frame.data[1]));
-            imu_msg.angular_velocity.y = (((((short)frame.data[2]) << 8) | frame.data[3]));
-            imu_msg.angular_velocity.z = (((((short)frame.data[4]) << 8) | frame.data[5]));
+        case(0x324):{
+            imu_msg.angular_velocity.x = static_cast<float>(short ((frame.data[1] << 8) | (frame.data[0]))) / 256.0;
+            imu_msg.angular_velocity.y = static_cast<float>(short ((frame.data[3] << 8) | (frame.data[2]))) / 256.0;
+            imu_msg.angular_velocity.z = static_cast<float>(short ((frame.data[5] << 8) | (frame.data[4]))) / 256.0;
             break;
         }
-
-        case(0x277):{
-            // gps_msg.latitude = (((((short)frame.data[0]) << 8) | frame.data[1]));
-            // gps_msg.orientation.y = (((((short)frame.data[2]) << 8) | frame.data[3]));
-            // gps_msg.orientation.z = (((((short)frame.data[4]) << 8) | frame.data[5]));
-            // gps_msg.orientation.w = (((((short)frame.data[6]) << 8) | frame.data[7]));
-            imu_msg.header.stamp = this->get_clock()->now();
-            gps_msg.header.stamp = this->get_clock()->now();
-            
+        case(0x337):{
+            imu_msg.angular_velocity.x = static_cast<float>(short ((frame.data[1] << 8) | (frame.data[0]))) / 256.0;
+            imu_msg.angular_velocity.y = static_cast<float>(short ((frame.data[3] << 8) | (frame.data[2]))) / 256.0;
+            imu_msg.angular_velocity.z = static_cast<float>(short ((frame.data[5] << 8) | (frame.data[4]))) / 256.0;
             break;
         }
-        if(curr_bag_state){
-            writer_->write(imu_msg, IMU, now());
-            writer_->write(gps_msg, GPS, now());
-        }
-        
+        case(0x375):{
+            gps_msg.latitude = (float((((frame.data[3]) << 24) | (frame.data[2] << 16) | (frame.data[1] << 8) | frame.data[0])) / 10000000.0);
+            gps_msg.longitude = (float((((frame.data[7]) << 24) | (frame.data[6] << 16) | (frame.data[5] << 8) | frame.data[4])) / 10000000.0);
+            break; 
+        }  
+    }
+    if(curr_bag_state){
+        imu_msg.header.stamp = this->get_clock()->now();
+        gps_msg.header.stamp = this->get_clock()->now();
+        writer_->write(imu_msg, IMU, now());
+        writer_->write(gps_msg, GPS, now());
     }
 }
 
@@ -253,8 +254,9 @@ void fastdash::log_motec(can_msgs::msg::Frame frame){
             motec_msg.map_sensor = (((((short)frame.data[0]) << 8) | frame.data[1]) / 10.0);
             motec_msg.intake_air_temp = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
             motec_msg.gear = (((((short)frame.data[4]) << 8) | frame.data[5]));
+            
             motec_msg.wheel_speed = (((((short)frame.data[6]) << 8) | frame.data[7]) / 10.0);
-            motec_msg.gear = get_gear(motec_msg.wheel_speed, motec_msg.engine_rpm);
+            motec_msg.calculated_gear =  get_gear(motec_msg.wheel_speed, motec_msg.engine_rpm);
             break;
         }
     }

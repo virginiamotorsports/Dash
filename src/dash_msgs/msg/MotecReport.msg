@@ -6,6 +6,7 @@ float32 engine_rpm
 float32 throttle_position
 float32 battery_voltage
 int8 gear
+int8 calculated_gear
 float32 fuel_pressure
 float32 front_brake_pressure
 float32 rear_brake_pressure

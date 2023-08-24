@@ -82,7 +82,7 @@ class Gui():
         self.window.addWidget(self.skid)
         self.num_windows+=1
         
-        self.window.setCurrentIndex(3)
+        self.window.setCurrentIndex(1)
         
     # def reShow(self):
     #     self.window.showMinimized()

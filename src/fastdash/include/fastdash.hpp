@@ -38,6 +38,8 @@
 #include <filesystem>
 #include <ctime>
 #include <unistd.h>
+#include <float.h>
+#include <cmath>
 #include <sys/types.h>
 #include <pwd.h>
 #include <math.h>

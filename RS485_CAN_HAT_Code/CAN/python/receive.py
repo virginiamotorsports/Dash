@@ -10,9 +10,10 @@ can0 = can.interface.Bus(channel = 'can0', bustype = 'socketcan')# socketcan_nat
 while(True):
     msg = can0.recv(10.0)
     print(msg)
-    if (msg.arbitration_id == 200):
-        # print(bytes(msg.data))
-        # print (struct.unpack('>H', bytes(msg.data[0:2]))[0]  / 10 - 100.)
+    if (msg.arbitration_id == 323):
+        print(bytes(msg.data))
+        print (struct.unpack('<L', bytes(msg.data[0:2]))[0]  / 100000)
+        print (struct.unpack('<', bytes(msg.data[0:2]))[0]  / 100000)
         # print(msg)
         pass
     if msg is None:
