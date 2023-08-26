@@ -100,10 +100,10 @@ void fastdash::start_bag(){
     writer_->create_topic({SUSP, "dash_msgs/msg/SuspensionReport", rmw_get_serialization_format(),""});
     writer_->create_topic({IMU, "sensor_msgs/msg/Imu", rmw_get_serialization_format(),""});
     writer_->create_topic({GPS, "sensor_msgs/msg/NavSatFix", rmw_get_serialization_format(),""});
-    if(DEBUG){
-        curr_bag_state = true;
-        prev_bag_state = true;
-    }
+    // if(DEBUG){
+        curr_bag_state = false;
+        prev_bag_state = false;
+    // }
     // std::string s1 = "Starting bag at " + filename + "\n";
     // RCLCPP_INFO(this->get_logger(), s1.c_str());
 }
@@ -173,33 +173,33 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
 void fastdash::log_imu(can_msgs::msg::Frame frame){
     switch(frame.id){
         case(0x321):{
-            imu_msg.linear_acceleration.x = static_cast<float>(short ((frame.data[1] << 8) | (frame.data[0]))) / 256.0;
-            imu_msg.linear_acceleration.y = static_cast<float>(short ((frame.data[3] << 8) | (frame.data[2]))) / 256.0;
-            imu_msg.linear_acceleration.z = static_cast<float>(short ((frame.data[5] << 8) | (frame.data[4]))) / 256.0;
+            imu_msg.linear_acceleration.x = (((((short)frame.data[1]) << 8) | frame.data[0]));
+            imu_msg.linear_acceleration.y = (((((short)frame.data[3]) << 8) | frame.data[2]));
+            imu_msg.linear_acceleration.z = (((((short)frame.data[5]) << 8) | frame.data[4]));
             break;
         }
         case(0x331):{
-            imu_msg.orientation.x = static_cast<float>(short ((frame.data[1] << 8) | (frame.data[0]))) / 256.0;
-            imu_msg.orientation.y = static_cast<float>(short ((frame.data[3] << 8) | (frame.data[2]))) / 256.0;
-            imu_msg.orientation.z = static_cast<float>(short ((frame.data[5] << 8) | (frame.data[4]))) / 256.0;
-            imu_msg.orientation.w = static_cast<float>(short ((frame.data[7] << 8) | (frame.data[6]))) / 256.0;
+            imu_msg.orientation.x = (((((short)frame.data[1]) << 8) | frame.data[0]));
+            imu_msg.orientation.y = (((((short)frame.data[3]) << 8) | frame.data[2]));
+            imu_msg.orientation.z = (((((short)frame.data[5]) << 8) | frame.data[4]));
+            imu_msg.orientation.w = (((((short)frame.data[7]) << 8) | frame.data[6]));
             break;
         }
         case(0x324):{
-            imu_msg.angular_velocity.x = static_cast<float>(short ((frame.data[1] << 8) | (frame.data[0]))) / 256.0;
-            imu_msg.angular_velocity.y = static_cast<float>(short ((frame.data[3] << 8) | (frame.data[2]))) / 256.0;
-            imu_msg.angular_velocity.z = static_cast<float>(short ((frame.data[5] << 8) | (frame.data[4]))) / 256.0;
+            imu_msg.angular_velocity.x = (((((short)frame.data[1]) << 8) | frame.data[0]));
+            imu_msg.angular_velocity.y = (((((short)frame.data[3]) << 8) | frame.data[2]));
+            imu_msg.angular_velocity.z = (((((short)frame.data[5]) << 8) | frame.data[4]));
             break;
         }
         case(0x337):{
-            imu_msg.angular_velocity.x = static_cast<float>(short ((frame.data[1] << 8) | (frame.data[0]))) / 256.0;
-            imu_msg.angular_velocity.y = static_cast<float>(short ((frame.data[3] << 8) | (frame.data[2]))) / 256.0;
-            imu_msg.angular_velocity.z = static_cast<float>(short ((frame.data[5] << 8) | (frame.data[4]))) / 256.0;
+            imu_msg.angular_velocity.x = (((((short)frame.data[1]) << 8) | frame.data[0]));
+            imu_msg.angular_velocity.y = (((((short)frame.data[3]) << 8) | frame.data[2]));
+            imu_msg.angular_velocity.z = (((((short)frame.data[5]) << 8) | frame.data[4]));
             break;
         }
         case(0x375):{
-            gps_msg.latitude = (float((((frame.data[3]) << 24) | (frame.data[2] << 16) | (frame.data[1] << 8) | frame.data[0])) / 10000000.0);
-            gps_msg.longitude = (float((((frame.data[7]) << 24) | (frame.data[6] << 16) | (frame.data[5] << 8) | frame.data[4])) / 10000000.0);
+            gps_msg.latitude = (((((int)frame.data[3]) << 24) | (frame.data[2] << 16) | (frame.data[1] << 8) | frame.data[0])) / 10000000.0;
+            gps_msg.longitude = (((((int)frame.data[7]) << 24) | (frame.data[6] << 16) | (frame.data[5] << 8) | frame.data[4])) / 10000000.0;
             break; 
         }  
     }
@@ -228,19 +228,19 @@ void fastdash::log_motec(can_msgs::msg::Frame frame){
             sus_msg.rear_left_linpot = (((((short)frame.data[2]) << 8) | frame.data[3]) / 10.0);
             sus_msg.rear_right_linpot = (((((short)frame.data[4]) << 8) | frame.data[5]) / 10.0);
             motec_msg.engine_rpm = (((((short)frame.data[6]) << 8) | frame.data[7]));
-            if(motec_msg.engine_rpm > 700 && prev_bag_state == false){
-                if(data_collection_hyst != -1)
-                    data_collection_hyst = -1;
-                prev_bag_state = true;
-                curr_bag_state = true;
-            }
-            else if(motec_msg.engine_rpm < 400 && prev_bag_state == true){
-                prev_bag_state = false;
-                data_collection_hyst = this->get_clock()->now().nanoseconds(); // gets time that the engine rmp went below the limit
-            }
-            if((long int)(this->get_clock()->now().nanoseconds()) - data_collection_hyst > 1000000000 && curr_bag_state == true && prev_bag_state == false){
-                stop_bag(); // stops recording when the engine rpm was too low for 10s long
-            }
+            // if(motec_msg.engine_rpm > 700 && prev_bag_state == false){
+            //     if(data_collection_hyst != -1)
+            //         data_collection_hyst = -1;
+            //     prev_bag_state = true;
+            //     curr_bag_state = true;
+            // }
+            // else if(motec_msg.engine_rpm < 400 && prev_bag_state == true){
+            //     prev_bag_state = false;
+            //     data_collection_hyst = this->get_clock()->now().nanoseconds(); // gets time that the engine rmp went below the limit
+            // }
+            // if((long int)(this->get_clock()->now().nanoseconds()) - data_collection_hyst > 1000000000 && curr_bag_state == true && prev_bag_state == false){
+            //     stop_bag(); // stops recording when the engine rpm was too low for 10s long
+            // }
             break;
         }
         case(0x102):{
