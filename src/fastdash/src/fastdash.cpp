@@ -101,8 +101,8 @@ void fastdash::start_bag(){
     writer_->create_topic({IMU, "sensor_msgs/msg/Imu", rmw_get_serialization_format(),""});
     writer_->create_topic({GPS, "sensor_msgs/msg/NavSatFix", rmw_get_serialization_format(),""});
     // if(DEBUG){
-        curr_bag_state = false;
-        prev_bag_state = false;
+        curr_bag_state = true;
+        prev_bag_state = true;
     // }
     // std::string s1 = "Starting bag at " + filename + "\n";
     // RCLCPP_INFO(this->get_logger(), s1.c_str());
@@ -160,7 +160,7 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
         // t1.join();
         log_imu(frame);
     }
-    else if(frame.id >= 0x400 && frame.id <= 0x490){
+    else if(frame.id >= 0x400 && frame.id <= 0x4D0){
         // std::thread t1(&fastdash::log_brake, this, frame);
         // t1.join();
         log_brake(frame);
@@ -173,30 +173,30 @@ void fastdash::CanListener(struct can_frame& rec_frame, boost::asio::posix::basi
 void fastdash::log_imu(can_msgs::msg::Frame frame){
     switch(frame.id){
         case(0x321):{
-            imu_msg.linear_acceleration.x = (((((short)frame.data[1]) << 8) | frame.data[0]));
-            imu_msg.linear_acceleration.y = (((((short)frame.data[3]) << 8) | frame.data[2]));
-            imu_msg.linear_acceleration.z = (((((short)frame.data[5]) << 8) | frame.data[4]));
+            imu_msg.linear_acceleration.x = (((((short)frame.data[1]) << 8) | frame.data[0])) / 100.0;
+            imu_msg.linear_acceleration.y = (((((short)frame.data[3]) << 8) | frame.data[2])) / 100.0;
+            imu_msg.linear_acceleration.z = (((((short)frame.data[5]) << 8) | frame.data[4])) / 100.0;
             break;
         }
         case(0x331):{
-            imu_msg.orientation.x = (((((short)frame.data[1]) << 8) | frame.data[0]));
-            imu_msg.orientation.y = (((((short)frame.data[3]) << 8) | frame.data[2]));
-            imu_msg.orientation.z = (((((short)frame.data[5]) << 8) | frame.data[4]));
-            imu_msg.orientation.w = (((((short)frame.data[7]) << 8) | frame.data[6]));
+            imu_msg.orientation.x = (((((short)frame.data[1]) << 8) | frame.data[0])) * 3.05185094759972E-005;
+            imu_msg.orientation.y = (((((short)frame.data[3]) << 8) | frame.data[2])) * 3.05185094759972E-005;
+            imu_msg.orientation.z = (((((short)frame.data[5]) << 8) | frame.data[4])) * 3.05185094759972E-005;
+            imu_msg.orientation.w = (((((short)frame.data[7]) << 8) | frame.data[6])) * 3.05185094759972E-005;
             break;
         }
         case(0x324):{
-            imu_msg.angular_velocity.x = (((((short)frame.data[1]) << 8) | frame.data[0]));
-            imu_msg.angular_velocity.y = (((((short)frame.data[3]) << 8) | frame.data[2]));
-            imu_msg.angular_velocity.z = (((((short)frame.data[5]) << 8) | frame.data[4]));
+            imu_msg.angular_velocity.x = (((((short)frame.data[1]) << 8) | frame.data[0])) / 1000.0;
+            imu_msg.angular_velocity.y = (((((short)frame.data[3]) << 8) | frame.data[2])) / 1000.0;
+            imu_msg.angular_velocity.z = (((((short)frame.data[5]) << 8) | frame.data[4])) / 1000.0;
             break;
         }
-        case(0x337):{
-            imu_msg.angular_velocity.x = (((((short)frame.data[1]) << 8) | frame.data[0]));
-            imu_msg.angular_velocity.y = (((((short)frame.data[3]) << 8) | frame.data[2]));
-            imu_msg.angular_velocity.z = (((((short)frame.data[5]) << 8) | frame.data[4]));
-            break;
-        }
+        // case(0x339):{
+        //     imu_msg.angular_velocity.x = (((((short)frame.data[1]) << 8) | frame.data[0])) / 100.0;
+        //     imu_msg.angular_velocity.y = (((((short)frame.data[3]) << 8) | frame.data[2])) / 100.0;
+        //     imu_msg.angular_velocity.z = (((((short)frame.data[5]) << 8) | frame.data[4])) / 100.0;
+        //     break;
+        // }
         case(0x375):{
             gps_msg.latitude = (((((int)frame.data[3]) << 24) | (frame.data[2] << 16) | (frame.data[1] << 8) | frame.data[0])) / 10000000.0;
             gps_msg.longitude = (((((int)frame.data[7]) << 24) | (frame.data[6] << 16) | (frame.data[5] << 8) | frame.data[4])) / 10000000.0;

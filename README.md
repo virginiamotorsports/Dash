@@ -77,3 +77,11 @@ ros2 launch virginia_motorsports_dashboard dashboard.launch.py
 ## Contributing
 
 If you'd like to contribute to Virginia Motorsports Dashboard, please fork this repository and submit a pull request.
+
+
+## Broken bag files
+```
+sqlite3 rosbag2_recording.db3 .recover > data.sql
+mv rosbag2_recording.db3 rosbag2_recording.db3.bak
+sqliite3 rosbag2_recording.db3 < data.sql
+```

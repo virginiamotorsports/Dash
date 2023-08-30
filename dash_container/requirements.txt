@@ -1,0 +1,5 @@
+pythonping
+pyqtgraph
+numpy>=
+tcp-latency
+pyqt5
